@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "U1",
+    "name": "John Smith",
+    "username": "john_smith",
+    "email": "john_smith@gmail.com",
+    "password": "rotiprata123",
+    "recipes": [
+      "CR1", "CR2"
+    ],
+    "favorite_recipes": [
+      "CR1", "CR2", "CR3"
+    ]
+  }
+]

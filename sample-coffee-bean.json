@@ -1,0 +1,22 @@
+[
+	{
+		"_id": "C1",
+		"name": "Ethiopia",
+		"roast_level": "medium",
+		"blend": false,
+		"variety": "arabica",
+		"flavor_notes": ["sweet", "fruity", "milk chocolate"],
+		"roaster": "Jewel Coffee",
+		"origins": ["ethiopia"]
+	},
+	{
+		"_id": "C2",
+		"name": "Pike's Place",
+		"roast_level": "medium",
+		"blend": true,
+		"variety": "arabica",
+		"flavor_notes": ["caramel", "dark chocolate"],
+		"roaster": "Starbucks Coffee",
+		"origins": ["ethiopia", "columbia", "sumatra"]
+	}
+]
