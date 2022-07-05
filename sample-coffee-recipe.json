@@ -2,6 +2,7 @@
 	{
 		"_id": "CR1",
 		"recipe_name": "Aeropress Championship 2021 Recipe",
+		"description": "The simplest method to get a great tasting coffee",
 		"owner": {
 			"_id": "U1",
 			"username": "john_smith"
@@ -35,7 +36,14 @@
 		},
     "grind_setting": 14,
 		"brew_yield": 200,
-		"description": [
+		"additional_equipment": ["wooden stirrer"],
+		"additional_ingredients": [
+			{
+				"name": "milk",
+				"amount": "50"
+			}
+		], 
+		"steps": [
 			"Step 1: Grind coffee and pre-heat carafe",
 			"Step 2: Add hot water to Aeropress and wait 10 minutes",
 			"Step 3: Pour coffee into carafe and enjoy hot or with ice"
