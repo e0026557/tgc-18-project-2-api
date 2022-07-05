@@ -4,6 +4,7 @@
 		"image_url": "https://images.unsplash.com/photo-1648142119324-fbab91e76c66?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1174&q=80",
 		"recipe_name": "Aeropress Championship 2022 Winner Recipe",
 		"description": "The best coffee recipe that won the Aeropress Championship 2022",
+		"average_rating": 5,
 		"user": {
 			"username": "john_smith",
 			"email": "john_smith@gmail.com"
@@ -54,6 +55,7 @@
 		"image_url": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y29mZmVlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
 		"recipe_name": "Lungo",
 		"description": "Simple lungo using Wacaco Picopresso",
+		"average_rating": 4,
 		"user": {
 			"username": "jane_austin",
 			"email": "jane_austin@gmail.com"
@@ -100,6 +102,7 @@
 		"image_url": "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8OXx8Y29mZmVlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
 		"recipe_name": "Simple Iced Latte",
 		"description": "Inspired by Starbucks coffee",
+		"average_rating": 4.5,
 		"user": {
 			"username": "sally_doe",
 			"email": "sally_doe@gmail.com"
