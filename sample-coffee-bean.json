@@ -18,5 +18,15 @@
 		"flavor_notes": ["caramel", "dark chocolate"],
 		"roaster": "Starbucks Coffee",
 		"origins": ["ethiopia", "columbia", "sumatra"]
+	},
+	{
+		"_id": "C3",
+		"name": "Columbia",
+		"roast_level": "dark",
+		"blend": false,
+		"variety": "arabica",
+		"flavor_notes": ["berries", "milk chocolate"],
+		"roaster": "SixFour Coffee",
+		"origins": ["columbia"]
 	}
 ]
