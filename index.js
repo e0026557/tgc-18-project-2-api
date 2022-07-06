@@ -39,8 +39,16 @@ async function main() {
   // Connect to database
   const db = await MongoUtil.connect(MONGO_URI, DB_NAME);
 
+  // --- Functions ---
+  async function getRecordById(collection, id) {
+    const record = await db.collection(DB_COLLECTION[collection]).findOne({
+      '_id': ObjectId(id)
+    });
+    return record;
+  }
+
   // Routes
-  app.get('/', async function (req, res) {
+  app.get('/', function (req, res) {
     res.send('Welcome to CoffeeTalk API');
   });
 
@@ -126,11 +134,34 @@ async function main() {
 
     try {
       // Exclude user's email in projection since it is used for verification purposes
-      const recipes = await db.collection(DB_COLLECTION.recipes).find(criteria, {
+      let recipes = await db.collection(DB_COLLECTION.recipes).find(criteria, {
         'projection': {
           'user.email': 0
         }
-      }).sort(sortOption).limit(limit).skip((page-1)*limit).toArray();
+      }).sort(sortOption).limit(limit).skip((page - 1) * limit).toArray();
+
+      // Populate each recipe with referenced documents for beans, grinders, brewers and brewing methods
+      for (let recipe of recipes) {
+        // Populate beans records
+        let beans = [];
+        for (let beanId of recipe.coffee_beans) {
+          let beanRecord = await getRecordById('beans', beanId);
+          beans.push(beanRecord);
+        }
+        recipe.coffee_beans = beans;
+        console.log(beans);
+
+        // Populate grinder record
+        if (recipe.grinder) {
+          recipe.grinder = await getRecordById('grinders', recipe.grinder);
+        }
+
+        // Populate brewer record
+        recipe.brewer = await getRecordById('brewers', recipe.brewer);
+
+        // Populate brewing method record
+        recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
+      }
 
       res.status(200); // OK
       res.json(recipes);
