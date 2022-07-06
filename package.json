@@ -1,0 +1,27 @@
+{
+  "name": "tgc-18-project-2-api",
+  "version": "1.0.0",
+  "description": "This is an Express server used as the backend for CoffeeTalk - Access demo integration with frontend [here]() - For more details on CoffeeTalk, please visit the README at the repository [here](https://github.com/e0026557/TGC-18-Project-2)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e0026557/TGC-18-Project-2-API.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/e0026557/TGC-18-Project-2-API/issues"
+  },
+  "homepage": "https://github.com/e0026557/TGC-18-Project-2-API#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "mongodb": "^4.7.0"
+  }
+}

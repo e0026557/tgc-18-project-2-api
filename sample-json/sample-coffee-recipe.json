@@ -35,11 +35,11 @@
 		],
     "brewer": "B1",
 		"additional_equipment": ["wooden stirrer", "Aeropress filter paper"],
-		"steps": [
-			"Step 1: Grind coffee and pre-heat carafe",
-			"Step 2: Add hot water to Aeropress and wait 10 minutes",
-			"Step 3: Pour coffee into carafe and enjoy hot or with ice"
-		],
+		"steps": {
+			"1": "Grind coffee and pre-heat carafe",
+			"2": "Add hot water to Aeropress and wait 10 minutes",
+			"3": "Pour coffee into carafe and enjoy hot or with ice"
+		},
 		"reviews": [
       {
         "username": "jane_austin",
@@ -82,11 +82,11 @@
 		],
     "brewer": "B2",
 		"additional_equipment": [],
-		"steps": [
-			"Step 1: Grind coffee and pre-heat brewer",
-			"Step 2: Add hot water to brewer and wait 10 seconds",
-			"Step 3: Extract espresso into a cup and add milk"
-		],
+		"steps": {
+			"1": "Grind coffee and pre-heat brewer",
+			"2": "Add hot water to brewer and wait 10 seconds",
+			"3": "Extract espresso into a cup and add milk"
+		},
 		"reviews": [
       {
         "username": "john_smith",
@@ -129,11 +129,11 @@
 		],
     "brewer": "B3",
 		"additional_equipment": [],
-		"steps": [
-			"Step 1: Grind coffee and add to brewer",
-			"Step 2: Add hot water to brewer and wait 30 seconds",
-			"Step 3: Extract coffee and add cold milk"
-		],
+		"steps": {
+			"1": "Grind coffee and add to brewer",
+			"2": "Add hot water to brewer and wait 30 seconds",
+			"3": "Extract coffee and add cold milk"
+		},
 		"reviews": [
       {
         "username": "jane_austin",
