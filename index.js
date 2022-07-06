@@ -133,6 +133,12 @@ async function main() {
     }
 
     try {
+      // Get total count of documents
+      let totalCount = await db.collection(DB_COLLECTION.recipes).find(criteria).count();
+
+      // Calculate the total number of pages required (if each page has max of 10 documents)
+      let totalPages = Math.ceil(totalCount / 10);
+
       // Exclude user's email in projection since it is used for verification purposes
       let recipes = await db.collection(DB_COLLECTION.recipes).find(criteria, {
         'projection': {
@@ -149,7 +155,6 @@ async function main() {
           beans.push(beanRecord);
         }
         recipe.coffee_beans = beans;
-        console.log(beans);
 
         // Populate grinder record
         if (recipe.grinder) {
@@ -164,13 +169,33 @@ async function main() {
       }
 
       res.status(200); // OK
-      res.json(recipes);
+      res.json({
+        result: recipes,
+        pages: totalPages
+      });
     }
     catch (err) {
       res.status(500); // Internal server error
       res.json({
         message: "Internal server error. Please contact administrator.",
       })
+    }
+  });
+
+  // Endpoint to retrieve a single coffee recipe by id
+  app.get('/recipes/:recipe_id', async function (req, res) {
+    // Get coffee recipe record
+    const recipeRecord = await getRecordById('recipes', req.params.recipe_id);
+
+    if (recipeRecord) {
+      res.status(200); // OK
+      res.json(recipeRecord);
+    }
+    else {
+      res.status(400); // Bad request
+      res.json({
+        message: 'Invalid coffee recipe ID.'
+      });
     }
   });
 
