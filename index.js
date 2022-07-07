@@ -196,7 +196,7 @@ async function main() {
     }
 
     // Return error message if any errors found
-    if (Object.keys(errorData)) {
+    if (Object.keys(errorData).length > 0) {
       sendInvalidError(res, errorData);
       return; // End the function 
     }
@@ -216,7 +216,8 @@ async function main() {
         .collection(DB_COLLECTION.recipes)
         .find(criteria, {
           projection: {
-            'user.email': 0
+            'user.email': 0,
+            'reviews': 0
           }
         })
         .sort(sortOption)
