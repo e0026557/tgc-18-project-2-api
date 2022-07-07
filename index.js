@@ -202,27 +202,35 @@ async function main() {
     catch (err) {
       res.status(500); // Internal server error
       res.json({
-        message: "Internal server error. Please contact administrator.",
-      })
+        message: 'Internal server error. Please contact administrator.'
+      });
     }
   });
 
   // Endpoint to retrieve a single coffee recipe by id
   app.get('/recipes/:recipe_id', async function (req, res) {
-    // Get coffee recipe record
-    const recipeRecord = await getRecordById('recipes', req.params.recipe_id);
+    try {
+      // Get coffee recipe record
+      const recipeRecord = await getRecordById('recipes', req.params.recipe_id);
 
-    if (recipeRecord) {
-      // Populate coffee recipe with fields from referenced documents
-      await populateRecipeFields(recipeRecord);
+      if (recipeRecord) {
+        // Populate coffee recipe with fields from referenced documents
+        await populateRecipeFields(recipeRecord);
 
-      res.status(200); // OK
-      res.json(recipeRecord);
+        res.status(200); // OK
+        res.json(recipeRecord);
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          message: 'Invalid coffee recipe ID.'
+        });
+      }
     }
-    else {
-      res.status(400); // Bad request
+    catch (err) {
+      res.status(500); // Internal server error
       res.json({
-        message: 'Invalid coffee recipe ID.'
+        message: 'Internal server error. Please contact administrator.'
       });
     }
   });
@@ -233,50 +241,99 @@ async function main() {
     // Get query strings
     let page = parseInt(req.query.page) || 1; // default page number is 1 if not specified
 
-    // Get user's favorited coffee recipes
-    let favoriteRecords = await db.collection(DB_COLLECTION.favorites).findOne({
-      'user_email': req.params.hash
-    }, {
-      'projection': {
-        'coffee_recipes': 1
+    try {
+      // Get user's favorited coffee recipes
+      let favoriteRecords = await db.collection(DB_COLLECTION.favorites).findOne({
+        'user_email': req.params.hash
+      }, {
+        'projection': {
+          'coffee_recipes': 1
+        }
+      });
+
+      // If favorite records are found, extract all details of coffee recipes
+      if (favoriteRecords) {
+        // Populate referenced coffee recipes into favorite records
+        let recipes = [];
+        for (let recipeId of favoriteRecords.coffee_recipes) {
+          // Get each coffee recipe
+          let recipe = await getRecordById('recipes', recipeId);
+
+          // Populate coffee recipe with fields of referenced documents
+          await populateRecipeFields(recipe);
+
+          // Push populated coffee recipe to array
+          recipes.push(recipe);
+        }
+
+        // Get index range of recipes to display (fixed limit of 10 documents per page)
+        let startIndex = (page - 1) * 10;
+        let endIndex = page * 10;
+
+        // Get total number of pages
+        let totalPages = Math.ceil(recipes.length / 10);
+
+        res.status(200); // OK
+        res.json({
+          result: recipes.slice(startIndex, endIndex),
+          pages: totalPages
+        });
       }
-    });
-
-    // If favorite records are found, extract all details of coffee recipes
-    if (favoriteRecords) {
-      // Populate referenced coffee recipes into favorite records
-      let recipes = [];
-      for (let recipeId of favoriteRecords.coffee_recipes) {
-        // Get each coffee recipe
-        let recipe = await getRecordById('recipes', recipeId);
-  
-        // Populate coffee recipe with fields of referenced documents
-        await populateRecipeFields(recipe);
-  
-        // Push populated coffee recipe to array
-        recipes.push(recipe);
+      else {
+        res.status(400); // Bad request;
+        res.json({
+          message: 'No document found.'
+        });
       }
+    }
+    catch (err) {
+      res.status(500); // Internal server error
+      res.json({
+        message: 'Internal server error. Please contact administrator.'
+      });
+    }
 
-      // Get index range of recipes to display (fixed limit of 10 documents per page)
-      let startIndex = (page-1)*10;
-      let endIndex = page*10;
+  });
 
-      // Get total number of pages
-      let totalPages = Math.ceil(recipes.length / 10);
+  // Endpoint to retrieve all coffee bean records
+  app.get('/beans', async function (req, res) {
+    try {
+      const beanRecords = await db.collection(DB_COLLECTION.beans).find({}).toArray();
 
       res.status(200); // OK
-      res.json({
-        result: recipes.slice(startIndex, endIndex),
-        pages: totalPages
-      });
+      res.json(beanRecords);
     }
-    else {
-      res.status(400); // Bad request;
+    catch (err) {
+      res.status(500); // Internal server error
       res.json({
-        message: 'No document found.'
-      });
+        message: 'Internal server error. Please contact administrator.'
+      })
     }
 
+  });
+
+  // Endpoint to retrive coffee bean record by id
+  app.get('/beans/:bean_id', async function (req, res) {
+    try {
+      const beanRecord = await getRecordById('beans', req.params.bean_id);
+
+      if (beanRecord) {
+        res.status(200); // OK
+        res.json(beanRecord);
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          message: 'Invalid coffee bean ID.'
+        });
+      }
+    }
+    catch (err) {
+      res.status(500); // Internal server error
+      res.json({
+        message: 'Internal server error. Please contact administrator.'
+      })
+    }
   });
 
 }
