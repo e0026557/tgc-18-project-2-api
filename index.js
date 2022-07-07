@@ -68,6 +68,14 @@ async function main() {
     recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
   }
 
+  function sendSuccessResponse(res, data) {
+    res.status(200); // OK
+    res.json({
+      status: 'success',
+      data: data
+    });
+  }
+
   function sendDatabaseError(res) {
     res.status(500); // Internal server error
     res.json({
@@ -197,15 +205,13 @@ async function main() {
         await populateRecipeFields(recipe);
       }
 
-      res.status(200); // OK
-      res.json({
-        status: 'success',
-        data: {
-          result: recipes,
-          count: totalCount,
-          pages: totalPages
-        }
-      });
+      let data = {
+        result: recipes,
+        count: totalCount,
+        pages: totalPages
+      };
+
+      sendSuccessResponse(res, data);
     }
     catch (err) {
       sendDatabaseError(res);
@@ -222,13 +228,11 @@ async function main() {
         // Populate coffee recipe with fields from referenced documents
         await populateRecipeFields(recipeRecord);
 
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: recipeRecord
-          }
-        });
+        let data = {
+          result: recipeRecord
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         res.status(400); // Bad request
@@ -283,26 +287,22 @@ async function main() {
         // Get total number of pages
         let totalPages = Math.ceil(recipes.length / 10);
 
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: recipes.slice(startIndex, endIndex),
-            count: recipes.length,
-            pages: totalPages
-          }
-        });
+        let data = {
+          result: recipes.slice(startIndex, endIndex),
+          count: recipes.length,
+          pages: totalPages
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         // Assume that hashed email is correct and that there is no favorited coffee recipes yet
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: null,
-            pages: 1
-          }
-        });
+        let data = {
+          result: null,
+          pages: 1
+        };
+
+        sendSuccessResponse(res, data);
       }
     }
     catch (err) {
@@ -316,13 +316,11 @@ async function main() {
     try {
       const beanRecords = await db.collection(DB_COLLECTION.beans).find({}).toArray();
 
-      res.status(200); // OK
-      res.json({
-        status: 'success',
-        data: {
-          result: beanRecords,
-        }
-      });
+      let data = {
+        result: beanRecords
+      };
+
+      sendSuccessResponse(res, data);
     }
     catch (err) {
       sendDatabaseError(res);
@@ -336,13 +334,11 @@ async function main() {
       const beanRecord = await getRecordById('beans', req.params.bean_id);
 
       if (beanRecord) {
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: beanRecord
-          }
-        });
+        let data = {
+          result: beanRecord
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         res.status(400); // Bad request
@@ -365,13 +361,11 @@ async function main() {
     try {
       const grinderRecords = await db.collection(DB_COLLECTION.grinders).find({}).toArray();
 
-      res.status(200); // OK
-      res.json({
-        status: 'success',
-        data: {
-          result: grinderRecords
-        }
-      });
+      let data = {
+        result: grinderRecords
+      };
+
+      sendSuccessResponse(res, data);
     }
     catch (err) {
       sendDatabaseError(res);
@@ -385,13 +379,11 @@ async function main() {
       const grinderRecord = await getRecordById('grinders', req.params.grinder_id);
 
       if (grinderRecord) {
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: grinderRecord
-          }
-        });
+        let data = {
+          result: grinderRecord
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         res.status(400); // Bad request
@@ -414,13 +406,11 @@ async function main() {
     try {
       const brewerRecords = await db.collection(DB_COLLECTION.brewers).find({}).toArray();
 
-      res.status(200); // OK
-      res.json({
-        status: 'success',
-        data: {
-          result: brewerRecords
-        }
-      });
+      let data = {
+        result: brewerRecords
+      };
+
+      sendSuccessResponse(res, data);
     }
     catch (err) {
       sendDatabaseError(res);
@@ -434,13 +424,11 @@ async function main() {
       const brewerRecord = await getRecordById('brewers', req.params.brewer_id);
 
       if (brewerRecord) {
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: brewerRecord
-          }
-        });
+        let data = {
+          result: brewerRecord
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         res.status(400); // Bad request
@@ -463,13 +451,11 @@ async function main() {
     try {
       const methodRecords = await db.collection(DB_COLLECTION.methods).find({}).toArray();
 
-      res.status(200); // OK
-      res.json({
-        status: 'success',
-        data: {
-          result: methodRecords
-        }
-      });
+      let data = {
+        result: methodRecords
+      };
+
+      sendSuccessResponse(res, data);
     }
     catch (err) {
       sendDatabaseError(res);
@@ -483,13 +469,11 @@ async function main() {
       const methodRecord = await getRecordById('methods', req.params.method_id);
 
       if (methodRecord) {
-        res.status(200); // OK
-        res.json({
-          status: 'success',
-          data: {
-            result: methodRecord
-          }
-        });
+        let data = {
+          result: methodRecord
+        };
+
+        sendSuccessResponse(res, data);
       }
       else {
         res.status(400); // Bad request
