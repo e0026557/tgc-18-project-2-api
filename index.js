@@ -202,6 +202,7 @@ async function main() {
         status: 'success',
         data: {
           result: recipes,
+          count: totalCount,
           pages: totalPages
         }
       });
@@ -287,6 +288,7 @@ async function main() {
           status: 'success',
           data: {
             result: recipes.slice(startIndex, endIndex),
+            count: recipes.length,
             pages: totalPages
           }
         });
@@ -298,7 +300,7 @@ async function main() {
           status: 'success',
           data: {
             result: null,
-            pages: 0
+            pages: 1
           }
         });
       }
@@ -397,6 +399,104 @@ async function main() {
           status: 'fail',
           data: {
             id: 'Invalid coffee grinder ID'
+          }
+        });
+      }
+    }
+    catch (err) {
+      sendDatabaseError(res);
+    }
+  });
+
+
+  // Endpoint to retrieve all coffee brewer records
+  app.get('/brewers', async function (req, res) {
+    try {
+      const brewerRecords = await db.collection(DB_COLLECTION.brewers).find({}).toArray();
+
+      res.status(200); // OK
+      res.json({
+        status: 'success',
+        data: {
+          result: brewerRecords
+        }
+      });
+    }
+    catch (err) {
+      sendDatabaseError(res);
+    }
+
+  });
+
+  // Endpoint to retrive coffee brewer record by id
+  app.get('/brewers/:brewer_id', async function (req, res) {
+    try {
+      const brewerRecord = await getRecordById('brewers', req.params.brewer_id);
+
+      if (brewerRecord) {
+        res.status(200); // OK
+        res.json({
+          status: 'success',
+          data: {
+            result: brewerRecord
+          }
+        });
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          status: 'fail',
+          data: {
+            id: 'Invalid coffee brewer ID'
+          }
+        });
+      }
+    }
+    catch (err) {
+      sendDatabaseError(res);
+    }
+  });
+
+
+  // Endpoint to retrieve all brewing methods
+  app.get('/methods', async function (req, res) {
+    try {
+      const methodRecords = await db.collection(DB_COLLECTION.methods).find({}).toArray();
+
+      res.status(200); // OK
+      res.json({
+        status: 'success',
+        data: {
+          result: methodRecords
+        }
+      });
+    }
+    catch (err) {
+      sendDatabaseError(res);
+    }
+
+  });
+
+  // Endpoint to retrive brewing method by id
+  app.get('/methods/:method_id', async function (req, res) {
+    try {
+      const methodRecord = await getRecordById('methods', req.params.method_id);
+
+      if (methodRecord) {
+        res.status(200); // OK
+        res.json({
+          status: 'success',
+          data: {
+            result: methodRecord
+          }
+        });
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          status: 'fail',
+          data: {
+            id: 'Invalid brewing method ID'
           }
         });
       }
