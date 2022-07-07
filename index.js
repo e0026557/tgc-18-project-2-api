@@ -47,6 +47,27 @@ async function main() {
     return record;
   }
 
+  async function populateRecipeFields(recipe) {
+    // Populate beans records
+    let beans = [];
+    for (let beanId of recipe.coffee_beans) {
+      let beanRecord = await getRecordById('beans', beanId);
+      beans.push(beanRecord);
+    }
+    recipe.coffee_beans = beans;
+
+    // Populate grinder record
+    if (recipe.grinder) {
+      recipe.grinder = await getRecordById('grinders', recipe.grinder);
+    }
+
+    // Populate brewer record
+    recipe.brewer = await getRecordById('brewers', recipe.brewer);
+
+    // Populate brewing method record
+    recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
+  }
+
   // Routes
   app.get('/', function (req, res) {
     res.send('Welcome to CoffeeTalk API');
@@ -100,6 +121,7 @@ async function main() {
       };
     }
 
+    // Filter recipes that have average rating of at least <rating>
     if (rating) {
       criteria['average_rating'] = {
         $gte: Number(rating)
@@ -110,7 +132,7 @@ async function main() {
     page = page ? page : 1;
 
     // If limit is not specified, default value is 10
-    // If limit is specified, convert to int (default is string)
+    // otherwise, convert default query string value to int
     limit = limit ? parseInt(limit) : 10;
 
     // If sort is not specified, default is by latest date (descending order)
@@ -134,38 +156,41 @@ async function main() {
 
     try {
       // Get total count of documents
-      let totalCount = await db.collection(DB_COLLECTION.recipes).find(criteria).count();
+      let totalCount = await db.collection(DB_COLLECTION.recipes).countDocuments(criteria);
 
       // Calculate the total number of pages required (if each page has max of 10 documents)
       let totalPages = Math.ceil(totalCount / 10);
 
-      // Exclude user's email in projection since it is used for verification purposes
+      // Get all coffee recipes records
+      // Note: Exclude user's email in projection since it is used for verification purposes
       let recipes = await db.collection(DB_COLLECTION.recipes).find(criteria, {
         'projection': {
           'user.email': 0
         }
       }).sort(sortOption).limit(limit).skip((page - 1) * limit).toArray();
 
-      // Populate each recipe with referenced documents for beans, grinders, brewers and brewing methods
+      // Populate each coffee recipe with referenced documents for beans, grinders, brewers and brewing methods
       for (let recipe of recipes) {
-        // Populate beans records
-        let beans = [];
-        for (let beanId of recipe.coffee_beans) {
-          let beanRecord = await getRecordById('beans', beanId);
-          beans.push(beanRecord);
-        }
-        recipe.coffee_beans = beans;
+        // // Populate beans records
+        // let beans = [];
+        // for (let beanId of recipe.coffee_beans) {
+        //   let beanRecord = await getRecordById('beans', beanId);
+        //   beans.push(beanRecord);
+        // }
+        // recipe.coffee_beans = beans;
 
-        // Populate grinder record
-        if (recipe.grinder) {
-          recipe.grinder = await getRecordById('grinders', recipe.grinder);
-        }
+        // // Populate grinder record
+        // if (recipe.grinder) {
+        //   recipe.grinder = await getRecordById('grinders', recipe.grinder);
+        // }
 
-        // Populate brewer record
-        recipe.brewer = await getRecordById('brewers', recipe.brewer);
+        // // Populate brewer record
+        // recipe.brewer = await getRecordById('brewers', recipe.brewer);
 
-        // Populate brewing method record
-        recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
+        // // Populate brewing method record
+        // recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
+
+        await populateRecipeFields(recipe);
       }
 
       res.status(200); // OK
@@ -188,6 +213,9 @@ async function main() {
     const recipeRecord = await getRecordById('recipes', req.params.recipe_id);
 
     if (recipeRecord) {
+      // Populate coffee recipe with fields from referenced documents
+      await populateRecipeFields(recipeRecord);
+
       res.status(200); // OK
       res.json(recipeRecord);
     }
@@ -197,6 +225,58 @@ async function main() {
         message: 'Invalid coffee recipe ID.'
       });
     }
+  });
+
+  // Endpoint to retrieve all favorited coffee recipes of a user
+  // Note: User's email is hashed for added security
+  app.get('/favorites/:hash', async function (req, res) {
+    // Get query strings
+    let page = parseInt(req.query.page) || 1; // default page number is 1 if not specified
+
+    // Get user's favorited coffee recipes
+    let favoriteRecords = await db.collection(DB_COLLECTION.favorites).findOne({
+      'user_email': req.params.hash
+    }, {
+      'projection': {
+        'coffee_recipes': 1
+      }
+    });
+
+    // If favorite records are found, extract all details of coffee recipes
+    if (favoriteRecords) {
+      // Populate referenced coffee recipes into favorite records
+      let recipes = [];
+      for (let recipeId of favoriteRecords.coffee_recipes) {
+        // Get each coffee recipe
+        let recipe = await getRecordById('recipes', recipeId);
+  
+        // Populate coffee recipe with fields of referenced documents
+        await populateRecipeFields(recipe);
+  
+        // Push populated coffee recipe to array
+        recipes.push(recipe);
+      }
+
+      // Get index range of recipes to display (fixed limit of 10 documents per page)
+      let startIndex = (page-1)*10;
+      let endIndex = page*10;
+
+      // Get total number of pages
+      let totalPages = Math.ceil(recipes.length / 10);
+
+      res.status(200); // OK
+      res.json({
+        result: recipes.slice(startIndex, endIndex),
+        pages: totalPages
+      });
+    }
+    else {
+      res.status(400); // Bad request;
+      res.json({
+        message: 'No document found.'
+      });
+    }
+
   });
 
 }
