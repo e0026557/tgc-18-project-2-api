@@ -336,6 +336,48 @@ async function main() {
     }
   });
 
+
+  // Endpoint to retrieve all coffee grinder records
+  app.get('/grinders', async function (req, res) {
+    try {
+      const grinderRecords = await db.collection(DB_COLLECTION.grinders).find({}).toArray();
+
+      res.status(200); // OK
+      res.json(grinderRecords);
+    }
+    catch (err) {
+      res.status(500); // Internal server error
+      res.json({
+        message: 'Internal server error. Please contact administrator.'
+      })
+    }
+
+  });
+
+  // Endpoint to retrive coffee grinder record by id
+  app.get('/grinders/:grinder_id', async function (req, res) {
+    try {
+      const grinderRecord = await getRecordById('grinders', req.params.grinder_id);
+
+      if (grinderRecord) {
+        res.status(200); // OK
+        res.json(grinderRecord);
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          message: 'Invalid coffee grinder ID.'
+        });
+      }
+    }
+    catch (err) {
+      res.status(500); // Internal server error
+      res.json({
+        message: 'Internal server error. Please contact administrator.'
+      })
+    }
+  });
+
 }
 
 main();
