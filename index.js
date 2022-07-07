@@ -68,7 +68,15 @@ async function main() {
     recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
   }
 
-  // Routes
+  function sendDatabaseError(res) {
+    res.status(500); // Internal server error
+    res.json({
+      status: 'error',
+      message: 'Unable to communicate with database'
+    });
+  }
+
+  // --- Routes ---
   app.get('/', function (req, res) {
     res.send('Welcome to CoffeeTalk API');
   });
@@ -123,9 +131,21 @@ async function main() {
 
     // Filter recipes that have average rating of at least <rating>
     if (rating) {
-      criteria['average_rating'] = {
-        $gte: Number(rating)
-      };
+      // Check that rating is numeric
+      if (!isNaN(rating)) {
+        criteria['average_rating'] = {
+          $gte: Number(rating)
+        };
+      }
+      else {
+        res.status(400); // Bad request
+        res.json({
+          status: 'fail',
+          data: {
+            rating: 'Invalid value specified for rating'
+          }
+        });
+      }
     }
 
     // If page is not specified, default value is 1
@@ -150,7 +170,10 @@ async function main() {
     else {
       res.status(400); // Bad request
       res.json({
-        message: 'Invalid value specified for sort'
+        status: 'fail',
+        data: {
+          sort: 'Invalid value specified for sort'
+        }
       });
     }
 
@@ -171,39 +194,20 @@ async function main() {
 
       // Populate each coffee recipe with referenced documents for beans, grinders, brewers and brewing methods
       for (let recipe of recipes) {
-        // // Populate beans records
-        // let beans = [];
-        // for (let beanId of recipe.coffee_beans) {
-        //   let beanRecord = await getRecordById('beans', beanId);
-        //   beans.push(beanRecord);
-        // }
-        // recipe.coffee_beans = beans;
-
-        // // Populate grinder record
-        // if (recipe.grinder) {
-        //   recipe.grinder = await getRecordById('grinders', recipe.grinder);
-        // }
-
-        // // Populate brewer record
-        // recipe.brewer = await getRecordById('brewers', recipe.brewer);
-
-        // // Populate brewing method record
-        // recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
-
         await populateRecipeFields(recipe);
       }
 
       res.status(200); // OK
       res.json({
-        result: recipes,
-        pages: totalPages
+        status: 'success',
+        data: {
+          result: recipes,
+          pages: totalPages
+        }
       });
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      });
+      sendDatabaseError(res);
     }
   });
 
@@ -218,20 +222,25 @@ async function main() {
         await populateRecipeFields(recipeRecord);
 
         res.status(200); // OK
-        res.json(recipeRecord);
+        res.json({
+          status: 'success',
+          data: {
+            result: recipeRecord
+          }
+        });
       }
       else {
         res.status(400); // Bad request
         res.json({
-          message: 'Invalid coffee recipe ID.'
+          status: 'fail',
+          data: {
+            id: 'Invalid coffee recipe ID'
+          }
         });
       }
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      });
+      sendDatabaseError(res);
     }
   });
 
@@ -275,22 +284,27 @@ async function main() {
 
         res.status(200); // OK
         res.json({
-          result: recipes.slice(startIndex, endIndex),
-          pages: totalPages
+          status: 'success',
+          data: {
+            result: recipes.slice(startIndex, endIndex),
+            pages: totalPages
+          }
         });
       }
       else {
-        res.status(400); // Bad request;
+        // Assume that hashed email is correct and that there is no favorited coffee recipes yet
+        res.status(200); // OK
         res.json({
-          message: 'No document found.'
+          status: 'success',
+          data: {
+            result: null,
+            pages: 0
+          }
         });
       }
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      });
+      sendDatabaseError(res);
     }
 
   });
@@ -301,13 +315,15 @@ async function main() {
       const beanRecords = await db.collection(DB_COLLECTION.beans).find({}).toArray();
 
       res.status(200); // OK
-      res.json(beanRecords);
+      res.json({
+        status: 'success',
+        data: {
+          result: beanRecords,
+        }
+      });
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      })
+      sendDatabaseError(res);
     }
 
   });
@@ -319,20 +335,25 @@ async function main() {
 
       if (beanRecord) {
         res.status(200); // OK
-        res.json(beanRecord);
+        res.json({
+          status: 'success',
+          data: {
+            result: beanRecord
+          }
+        });
       }
       else {
         res.status(400); // Bad request
         res.json({
-          message: 'Invalid coffee bean ID.'
+          status: 'fail',
+          data: {
+            id: "Invalid coffee bean ID"
+          }
         });
       }
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      })
+      sendDatabaseError(res);
     }
   });
 
@@ -343,13 +364,15 @@ async function main() {
       const grinderRecords = await db.collection(DB_COLLECTION.grinders).find({}).toArray();
 
       res.status(200); // OK
-      res.json(grinderRecords);
+      res.json({
+        status: 'success',
+        data: {
+          result: grinderRecords
+        }
+      });
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      })
+      sendDatabaseError(res);
     }
 
   });
@@ -361,20 +384,25 @@ async function main() {
 
       if (grinderRecord) {
         res.status(200); // OK
-        res.json(grinderRecord);
+        res.json({
+          status: 'success',
+          data: {
+            result: grinderRecord
+          }
+        });
       }
       else {
         res.status(400); // Bad request
         res.json({
-          message: 'Invalid coffee grinder ID.'
+          status: 'fail',
+          data: {
+            id: 'Invalid coffee grinder ID'
+          }
         });
       }
     }
     catch (err) {
-      res.status(500); // Internal server error
-      res.json({
-        message: 'Internal server error. Please contact administrator.'
-      })
+      sendDatabaseError(res);
     }
   });
 
