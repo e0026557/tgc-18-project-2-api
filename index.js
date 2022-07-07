@@ -13,9 +13,11 @@ const app = express();
 app.use(cors());
 
 // Enable form processing
-app.use(express.urlencoded({
-  extended: false
-}));
+app.use(
+  express.urlencoded({
+    extended: false
+  })
+);
 
 // Enable JSON data processing
 app.use(express.json());
@@ -32,7 +34,7 @@ const DB_COLLECTION = {
   grinders: 'grinders',
   brewers: 'brewers',
   methods: 'methods'
-}
+};
 
 // --- Main ---
 async function main() {
@@ -42,7 +44,7 @@ async function main() {
   // --- Functions ---
   async function getRecordById(collection, id) {
     const record = await db.collection(DB_COLLECTION[collection]).findOne({
-      '_id': ObjectId(id)
+      _id: ObjectId(id)
     });
     return record;
   }
@@ -65,13 +67,24 @@ async function main() {
     recipe.brewer = await getRecordById('brewers', recipe.brewer);
 
     // Populate brewing method record
-    recipe.brewing_method = await getRecordById('methods', recipe.brewing_method);
+    recipe.brewing_method = await getRecordById(
+      'methods',
+      recipe.brewing_method
+    );
   }
 
   function sendSuccessResponse(res, data) {
     res.status(200); // OK
     res.json({
       status: 'success',
+      data: data
+    });
+  }
+
+  function sendInvalidError(res, data) {
+    res.status(400); // Bad request
+    res.json({
+      status: 'fail',
       data: data
     });
   }
@@ -91,11 +104,23 @@ async function main() {
 
   // Endpoint to retrieve all coffee recipes
   app.get('/recipes', async function (req, res) {
-    // Get query strings 
+    // Get query strings
     // Note: beans is a comma-separated string of ids
     // grinder, method, and brewer are ids
     // sort is a string that is either 'date' or 'rating'
-    let { name, beans, grinder, method, brewer, rating, page, limit, sort } = req.query;
+    let {
+      name,
+      beans,
+      grinder,
+      method,
+      brewer,
+      rating,
+      page,
+      limit,
+      sort
+    } = req.query;
+
+    let errorData = {};
 
     // Initialise criteria object
     let criteria = {};
@@ -105,13 +130,13 @@ async function main() {
       criteria['recipe_name'] = {
         $regex: name,
         $options: 'i'
-      }
-    };
+      };
+    }
 
     if (beans) {
       // Convert beans into array of ObjectIds
       beans = beans.split(',');
-      beans = beans.map(id => ObjectId(id));
+      beans = beans.map((id) => ObjectId(id));
 
       // Filter coffee recipes by coffee beans
       criteria['coffee_beans'] = {
@@ -144,15 +169,8 @@ async function main() {
         criteria['average_rating'] = {
           $gte: Number(rating)
         };
-      }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            rating: 'Invalid value specified for rating'
-          }
-        });
+      } else {
+        errorData['rating'] = 'Invalid value specified for rating';
       }
     }
 
@@ -167,44 +185,51 @@ async function main() {
     // Return error message if sort is neither empty, 'date' nor 'rating'
     if (!sort || sort === 'date') {
       sortOption = {
-        'date': -1
+        date: -1
       };
-    }
-    else if (sort === 'rating') {
+    } else if (sort === 'rating') {
       sortOption = {
-        'average_rating': -1
-      }
+        average_rating: -1
+      };
+    } else {
+      errorData['sort'] = 'Invalid value specified for sort';
     }
-    else {
-      res.status(400); // Bad request
-      res.json({
-        status: 'fail',
-        data: {
-          sort: 'Invalid value specified for sort'
-        }
-      });
+
+    // Return error message if any errors found
+    if (Object.keys(errorData)) {
+      sendInvalidError(res, errorData);
+      return; // End the function 
     }
 
     try {
       // Get total count of documents
-      let totalCount = await db.collection(DB_COLLECTION.recipes).countDocuments(criteria);
+      let totalCount = await db
+        .collection(DB_COLLECTION.recipes)
+        .countDocuments(criteria);
 
       // Calculate the total number of pages required (if each page has max of 10 documents)
       let totalPages = Math.ceil(totalCount / 10);
 
       // Get all coffee recipes records
       // Note: Exclude user's email in projection since it is used for verification purposes
-      let recipes = await db.collection(DB_COLLECTION.recipes).find(criteria, {
-        'projection': {
-          'user.email': 0
-        }
-      }).sort(sortOption).limit(limit).skip((page - 1) * limit).toArray();
+      let recipes = await db
+        .collection(DB_COLLECTION.recipes)
+        .find(criteria, {
+          projection: {
+            'user.email': 0
+          }
+        })
+        .sort(sortOption)
+        .limit(limit)
+        .skip((page - 1) * limit)
+        .toArray();
 
       // Populate each coffee recipe with referenced documents for beans, grinders, brewers and brewing methods
       for (let recipe of recipes) {
         await populateRecipeFields(recipe);
       }
 
+      // Data to be sent as response
       let data = {
         result: recipes,
         count: totalCount,
@@ -212,8 +237,7 @@ async function main() {
       };
 
       sendSuccessResponse(res, data);
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
@@ -222,29 +246,19 @@ async function main() {
   app.get('/recipes/:recipe_id', async function (req, res) {
     try {
       // Get coffee recipe record
-      const recipeRecord = await getRecordById('recipes', req.params.recipe_id);
+      const recipeRecord = await getRecordById(
+        'recipes',
+        req.params.recipe_id
+      );
 
       if (recipeRecord) {
         // Populate coffee recipe with fields from referenced documents
         await populateRecipeFields(recipeRecord);
-
-        let data = {
-          result: recipeRecord
-        };
-
-        sendSuccessResponse(res, data);
+        sendSuccessResponse(res, { result: recipeRecord });
+      } else {
+        sendInvalidError(res, { id: 'Invalid coffee recipe ID' });
       }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            id: 'Invalid coffee recipe ID'
-          }
-        });
-      }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
@@ -257,13 +271,18 @@ async function main() {
 
     try {
       // Get user's favorited coffee recipes
-      let favoriteRecords = await db.collection(DB_COLLECTION.favorites).findOne({
-        'user_email': req.params.hash
-      }, {
-        'projection': {
-          'coffee_recipes': 1
-        }
-      });
+      let favoriteRecords = await db
+        .collection(DB_COLLECTION.favorites)
+        .findOne(
+          {
+            user_email: req.params.hash
+          },
+          {
+            projection: {
+              coffee_recipes: 1
+            }
+          }
+        );
 
       // If favorite records are found, extract all details of coffee recipes
       if (favoriteRecords) {
@@ -287,6 +306,7 @@ async function main() {
         // Get total number of pages
         let totalPages = Math.ceil(recipes.length / 10);
 
+        // Data to be sent as response
         let data = {
           result: recipes.slice(startIndex, endIndex),
           count: recipes.length,
@@ -294,8 +314,7 @@ async function main() {
         };
 
         sendSuccessResponse(res, data);
-      }
-      else {
+      } else {
         // Assume that hashed email is correct and that there is no favorited coffee recipes yet
         let data = {
           result: null,
@@ -304,28 +323,22 @@ async function main() {
 
         sendSuccessResponse(res, data);
       }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
-
   });
 
   // Endpoint to retrieve all coffee bean records
   app.get('/beans', async function (req, res) {
     try {
-      const beanRecords = await db.collection(DB_COLLECTION.beans).find({}).toArray();
-
-      let data = {
-        result: beanRecords
-      };
-
-      sendSuccessResponse(res, data);
-    }
-    catch (err) {
+      const beanRecords = await db
+        .collection(DB_COLLECTION.beans)
+        .find({})
+        .toArray();
+      sendSuccessResponse(res, { result: beanRecords });
+    } catch (err) {
       sendDatabaseError(res);
     }
-
   });
 
   // Endpoint to retrive coffee bean record by id
@@ -334,162 +347,107 @@ async function main() {
       const beanRecord = await getRecordById('beans', req.params.bean_id);
 
       if (beanRecord) {
-        let data = {
-          result: beanRecord
-        };
-
-        sendSuccessResponse(res, data);
+        sendSuccessResponse(res, { result: beanRecord });
+      } else {
+        sendInvalidError(res, { id: 'Invalid coffee bean ID' });
       }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            id: "Invalid coffee bean ID"
-          }
-        });
-      }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
 
-
   // Endpoint to retrieve all coffee grinder records
   app.get('/grinders', async function (req, res) {
     try {
-      const grinderRecords = await db.collection(DB_COLLECTION.grinders).find({}).toArray();
-
-      let data = {
-        result: grinderRecords
-      };
-
-      sendSuccessResponse(res, data);
-    }
-    catch (err) {
+      const grinderRecords = await db
+        .collection(DB_COLLECTION.grinders)
+        .find({})
+        .toArray();
+      sendSuccessResponse(res, { result: grinderRecords });
+    } catch (err) {
       sendDatabaseError(res);
     }
-
   });
 
   // Endpoint to retrive coffee grinder record by id
   app.get('/grinders/:grinder_id', async function (req, res) {
     try {
-      const grinderRecord = await getRecordById('grinders', req.params.grinder_id);
+      const grinderRecord = await getRecordById(
+        'grinders',
+        req.params.grinder_id
+      );
 
       if (grinderRecord) {
-        let data = {
-          result: grinderRecord
-        };
-
-        sendSuccessResponse(res, data);
+        sendSuccessResponse(res, { result: grinderRecord });
+      } else {
+        sendInvalidError(res, { id: 'Invalid coffee grinder ID' });
       }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            id: 'Invalid coffee grinder ID'
-          }
-        });
-      }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
 
-
   // Endpoint to retrieve all coffee brewer records
   app.get('/brewers', async function (req, res) {
     try {
-      const brewerRecords = await db.collection(DB_COLLECTION.brewers).find({}).toArray();
-
-      let data = {
-        result: brewerRecords
-      };
-
-      sendSuccessResponse(res, data);
-    }
-    catch (err) {
+      const brewerRecords = await db
+        .collection(DB_COLLECTION.brewers)
+        .find({})
+        .toArray();
+      sendSuccessResponse(res, { result: brewerRecords });
+    } catch (err) {
       sendDatabaseError(res);
     }
-
   });
 
   // Endpoint to retrive coffee brewer record by id
   app.get('/brewers/:brewer_id', async function (req, res) {
     try {
-      const brewerRecord = await getRecordById('brewers', req.params.brewer_id);
+      const brewerRecord = await getRecordById(
+        'brewers',
+        req.params.brewer_id
+      );
 
       if (brewerRecord) {
-        let data = {
-          result: brewerRecord
-        };
-
-        sendSuccessResponse(res, data);
+        sendSuccessResponse(res, { result: brewerRecord });
+      } else {
+        sendInvalidError(res, { id: 'Invalid coffee brewer ID' });
       }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            id: 'Invalid coffee brewer ID'
-          }
-        });
-      }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
 
-
   // Endpoint to retrieve all brewing methods
   app.get('/methods', async function (req, res) {
     try {
-      const methodRecords = await db.collection(DB_COLLECTION.methods).find({}).toArray();
-
-      let data = {
-        result: methodRecords
-      };
-
-      sendSuccessResponse(res, data);
-    }
-    catch (err) {
+      const methodRecords = await db
+        .collection(DB_COLLECTION.methods)
+        .find({})
+        .toArray();
+      sendSuccessResponse(res, { result: methodRecords });
+    } catch (err) {
       sendDatabaseError(res);
     }
-
   });
 
   // Endpoint to retrive brewing method by id
   app.get('/methods/:method_id', async function (req, res) {
     try {
-      const methodRecord = await getRecordById('methods', req.params.method_id);
+      const methodRecord = await getRecordById(
+        'methods',
+        req.params.method_id
+      );
 
       if (methodRecord) {
-        let data = {
-          result: methodRecord
-        };
-
-        sendSuccessResponse(res, data);
+        sendSuccessResponse(res, { result: methodRecord });
+      } else {
+        sendInvalidError(res, { id: 'Invalid brewing method ID' });
       }
-      else {
-        res.status(400); // Bad request
-        res.json({
-          status: 'fail',
-          data: {
-            id: 'Invalid brewing method ID'
-          }
-        });
-      }
-    }
-    catch (err) {
+    } catch (err) {
       sendDatabaseError(res);
     }
   });
-
 }
 
 main();
