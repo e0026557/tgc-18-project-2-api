@@ -122,9 +122,195 @@ async function main() {
     return false;
   }
 
+  // Function to validate and format coffee recipe fields for posting to database
+  async function validateFormatRecipeFields(fieldObject, errorData) {
+    // Get all fields for new coffee recipe
+    // Note: total of 19 fields but 3 of them are optional
+    let { imageUrl, recipeName, description, username, email, totalBrewTime, brewYield, brewingMethod, coffeeBeans, coffeeRestPeriod, coffeeAmount, grinder, grindSetting, waterAmount, waterTemperature, additionalIngredients, brewer, additionalEquipment, steps } = fieldObject;
+
+    // If imageUrl is provided, check that it is a valid URL
+    // else set imageUrl to a default image url
+    if (imageUrl) {
+      if (!validateUrl(imageUrl)) {
+        errorData['imageUrl'] = 'Invalid image URL';
+      }
+    }
+    else {
+      imageUrl = getRandomImageUrl();
+    }
+
+    // Check that recipe name is provided (at least 5 characters)
+    if (recipeName) {
+      if (recipeName.length < 5) {
+        errorData['recipeName'] = 'Recipe name must be at least 5 characters';
+      }
+    }
+    else {
+      errorData['recipeName'] = 'Recipe name is a required field';
+    }
+
+    // Check that description is provided (at least 5 characters)
+    if (description) {
+      if (description.length < 5) {
+        errorData['description'] = 'Description must be at least 5 characters';
+      }
+    }
+    else {
+      errorData['description'] = 'Description is a required field';
+    }
+
+    // Check that username is provided (at least 5 characters)
+    if (username) {
+      if (username.length < 5) {
+        errorData['username'] = 'Username must be at least 5 characters';
+      }
+    }
+    else {
+      errorData['username'] = 'Username is a required field';
+    }
+
+    // Check that email is provided
+    if (email) {
+      if (!validateEmail(email)) {
+        errorData['email'] = 'Invalid email address';
+      }
+      else {
+        // Hash email
+        email = await BcryptUtil.hash(email);
+      }
+    }
+    else {
+      errorData['email'] = 'Email is a required field';
+    }
+
+    // Check that total brew time is provided (format: '<num> <unit>')
+    if (totalBrewTime.split(' ').length === 2) {
+      // Check that the time component is numeric
+      if (isNaN(totalBrewTime.split(' ')[0])) {
+        errorData['totalBrewTime'] = 'Invalid value specified for Total Brew Time';
+      }
+    }
+    else {
+      errorData['totalBrewTime'] = 'Total Brew Time is a required field';
+    }
+
+    // Check that brew yield is provided (format: '<num> <unit>')
+    if (brewYield.split(' ').length === 2) {
+      // Check that the amount component is numeric
+      if (isNaN(brewYield.split(' ')[0])) {
+        errorData['brewYield'] = 'Invalid value specified for Brew Yield';
+      }
+    }
+    else {
+      errorData['brewYield'] = 'Brew Yield is a required field';
+    }
+
+    // Check that brewing method is provided
+    if (!brewingMethod) {
+      errorData['brewingMethod'] = 'Brewing Method is a required field';
+    }
+
+    // Check that coffee beans are provided (checkbox)
+    if (coffeeBeans) {
+      // Format as array if not already an array
+      if (!Array.isArray(coffeeBeans)) {
+        coffeeBeans = [coffeeBeans];
+      }
+
+      // Convert to an array of ObjectIds
+      coffeeBeans = coffeeBeans.map(id => ObjectId(id));
+    }
+    else {
+      errorData['coffeeBeans'] = 'Coffee Beans is a required field';
+    }
+
+    // Check that coffee rest period is provided (select)
+    if (!coffeeRestPeriod) {
+      errorData['coffeeRestPeriod'] = 'Coffee Rest Period is a required field';
+    }
+
+    // Check that coffee amount is provided (in grams)
+    if (coffeeAmount) {
+      // Check that coffee amount is numeric
+      if (isNaN(coffeeAmount)) {
+        errorData['coffeeAmount'] = 'Invalid value specified for Coffee Amount';
+      }
+    }
+    else {
+      errorData['coffeeAmount'] = 'Coffee Amount is a required field';
+    }
+
+    // Check that grinder is provided
+    if (!grinder) {
+      errorData['grinder'] = 'Grinder is a required field';
+    }
+
+    // Check that grind setting is provided (string since different grinders have different way of specifying)
+    if (!grindSetting) {
+      errorData['grindSetting'] = 'Grind Setting is a required field';
+    }
+
+    // Check that water amount is provided (format: '<num> <unit>')
+    if (waterAmount.split(' ').length === 2) {
+      // Check that amount component is numeric
+      if (isNaN(waterAmount.split(' ')[0])) {
+        errorData['waterAmount'] = 'Invalid value specified for Water Amount';
+      }
+    }
+    else {
+      errorData['waterAmount'] = 'Water Amount is a required field';
+    }
+
+    // Check that water temperature is provided
+    if (waterTemperature) {
+      // Check that water temperature is numeric
+      if (isNaN(waterTemperature)) {
+        errorData['waterTemperature'] = 'Invalid value specified for Water Temperature';
+      }
+    }
+    else {
+      errorData['waterTemperature'] = 'Water Temperature is a required field';
+    }
+
+    // Check if any additional ingredients are provided (format: array) (optional field)
+    if (additionalIngredients) {
+      // Format as array if not already an array
+      if (!Array.isArray(additionalIngredients)) {
+        additionalIngredients = [additionalIngredients];
+      }
+    }
+    else {
+      additionalIngredients = []; // default to an empty array if not specified
+    }
+
+    // Check that brewer is provided
+    if (!brewer) {
+      errorData['brewer'] = 'Brewer is a required field';
+    }
+
+    // Check if any additional equipment is provided (format: array) (optional field)
+    if (additionalEquipment) {
+      // Format as array if not already an array
+      if (!Array.isArray(additionalEquipment)) {
+        additionalEquipment = [additionalEquipment];
+      }
+    }
+    else {
+      additionalEquipment = []; // default to an empty array if not specified
+    }
+
+    // Check that steps are provided (format: object)
+    if (Object.keys(steps).length < 1) {
+      errorData['steps'] = 'Steps is a required field';
+    }
+
+    // Return all formatted fields
+    return { imageUrl, recipeName, description, username, email, totalBrewTime, brewYield, brewingMethod, coffeeBeans, coffeeRestPeriod, coffeeAmount, grinder, grindSetting, waterAmount, waterTemperature, additionalIngredients, brewer, additionalEquipment, steps };
+  }
+
   function getRandomImageUrl() {
     let imageCount = IMAGE_URLS.length;
-    let index = Math.floor(Math.random()*imageCount);
+    let index = Math.floor(Math.random() * imageCount);
     return IMAGE_URLS[index];
   }
 
@@ -297,197 +483,207 @@ async function main() {
 
   // Endpoint to create a new coffee recipe
   app.post('/recipes', async function (req, res) {
-    // Get all fields for new coffee recipe
-    // Note: total of 18 fields but 3 of them are optional
-    let {imageUrl, recipeName, description, username, email, totalBrewTime, brewYield, brewingMethod, coffeeBeans, coffeeRestPeriod, coffeeAmount, grinder, grindSetting, waterAmount, waterTemperature, additionalIngredients, brewer, additionalEquipment, steps} = req.body;
 
-    console.log(req.body)
-    let errorData = {};
-    
-    // If imageUrl is provided, check that it is a valid URL
-    // else set imageUrl to a default image url
-    if (imageUrl) {
-      if (!validateUrl(imageUrl)) {
-        errorData['imageUrl'] = 'Invalid image URL';
+
+    // // -- start line
+    // // Get all fields for new coffee recipe
+    // // Note: total of 19 fields but 3 of them are optional
+    // let { imageUrl, recipeName, description, username, email, totalBrewTime, brewYield, brewingMethod, coffeeBeans, coffeeRestPeriod, coffeeAmount, grinder, grindSetting, waterAmount, waterTemperature, additionalIngredients, brewer, additionalEquipment, steps } = req.body;
+
+    // let errorData = {};
+
+    // // If imageUrl is provided, check that it is a valid URL
+    // // else set imageUrl to a default image url
+    // if (imageUrl) {
+    //   if (!validateUrl(imageUrl)) {
+    //     errorData['imageUrl'] = 'Invalid image URL';
+    //   }
+    // }
+    // else {
+    //   imageUrl = getRandomImageUrl();
+    // }
+
+    // // Check that recipe name is provided (at least 5 characters)
+    // if (recipeName) {
+    //   if (recipeName.length < 5) {
+    //     errorData['recipeName'] = 'Recipe name must be at least 5 characters';
+    //   }
+    // }
+    // else {
+    //   errorData['recipeName'] = 'Recipe name is a required field';
+    // }
+
+    // // Check that description is provided (at least 5 characters)
+    // if (description) {
+    //   if (description.length < 5) {
+    //     errorData['description'] = 'Description must be at least 5 characters';
+    //   }
+    // }
+    // else {
+    //   errorData['description'] = 'Description is a required field';
+    // }
+
+    // // Check that username is provided (at least 5 characters)
+    // if (username) {
+    //   if (username.length < 5) {
+    //     errorData['username'] = 'Username must be at least 5 characters';
+    //   }
+    // }
+    // else {
+    //   errorData['username'] = 'Username is a required field';
+    // }
+
+    // // Check that email is provided
+    // if (email) {
+    //   if (!validateEmail(email)) {
+    //     errorData['email'] = 'Invalid email address';
+    //   }
+    //   else {
+    //     // Hash email
+    //     email = await BcryptUtil.hash(email);
+    //   }
+    // }
+    // else {
+    //   errorData['email'] = 'Email is a required field';
+    // }
+
+    // // Check that total brew time is provided (format: '<num> <unit>')
+    // if (totalBrewTime.split(' ').length === 2) {
+    //   // Check that the time component is numeric
+    //   if (isNaN(totalBrewTime.split(' ')[0])) {
+    //     errorData['totalBrewTime'] = 'Invalid value specified for Total Brew Time';
+    //   }
+    // }
+    // else {
+    //   errorData['totalBrewTime'] = 'Total Brew Time is a required field';
+    // }
+
+    // // Check that brew yield is provided (format: '<num> <unit>')
+    // if (brewYield.split(' ').length === 2) {
+    //   // Check that the amount component is numeric
+    //   if (isNaN(brewYield.split(' ')[0])) {
+    //     errorData['brewYield'] = 'Invalid value specified for Brew Yield';
+    //   }
+    // }
+    // else {
+    //   errorData['brewYield'] = 'Brew Yield is a required field';
+    // }
+
+    // // Check that brewing method is provided
+    // if (!brewingMethod) {
+    //   errorData['brewingMethod'] = 'Brewing Method is a required field';
+    // }
+
+    // // Check that coffee beans are provided (checkbox)
+    // if (coffeeBeans) {
+    //   // Format as array if not already an array
+    //   if (!Array.isArray(coffeeBeans)) {
+    //     coffeeBeans = [coffeeBeans];
+    //   }
+
+    //   // Convert to an array of ObjectIds
+    //   coffeeBeans = coffeeBeans.map(id => ObjectId(id));
+    // }
+    // else {
+    //   errorData['coffeeBeans'] = 'Coffee Beans is a required field';
+    // }
+
+    // // Check that coffee rest period is provided (select)
+    // if (!coffeeRestPeriod) {
+    //   errorData['coffeeRestPeriod'] = 'Coffee Rest Period is a required field';
+    // }
+
+    // // Check that coffee amount is provided (in grams)
+    // if (coffeeAmount) {
+    //   // Check that coffee amount is numeric
+    //   if (isNaN(coffeeAmount)) {
+    //     errorData['coffeeAmount'] = 'Invalid value specified for Coffee Amount';
+    //   }
+    // }
+    // else {
+    //   errorData['coffeeAmount'] = 'Coffee Amount is a required field';
+    // }
+
+    // // Check that grinder is provided
+    // if (!grinder) {
+    //   errorData['grinder'] = 'Grinder is a required field';
+    // }
+
+    // // Check that grind setting is provided (string since different grinders have different way of specifying)
+    // if (!grindSetting) {
+    //   errorData['grindSetting'] = 'Grind Setting is a required field';
+    // }
+
+    // // Check that water amount is provided (format: '<num> <unit>')
+    // if (waterAmount.split(' ').length === 2) {
+    //   // Check that amount component is numeric
+    //   if (isNaN(waterAmount.split(' ')[0])) {
+    //     errorData['waterAmount'] = 'Invalid value specified for Water Amount';
+    //   }
+    // }
+    // else {
+    //   errorData['waterAmount'] = 'Water Amount is a required field';
+    // }
+
+    // // Check that water temperature is provided
+    // if (waterTemperature) {
+    //   // Check that water temperature is numeric
+    //   if (isNaN(waterTemperature)) {
+    //     errorData['waterTemperature'] = 'Invalid value specified for Water Temperature';
+    //   }
+    // }
+    // else {
+    //   errorData['waterTemperature'] = 'Water Temperature is a required field';
+    // }
+
+    // // Check if any additional ingredients are provided (format: array) (optional field)
+    // if (additionalIngredients) {
+    //   // Format as array if not already an array
+    //   if (!Array.isArray(additionalIngredients)) {
+    //     additionalIngredients = [additionalIngredients];
+    //   }
+    // }
+    // else {
+    //   additionalIngredients = []; // default to an empty array if not specified
+    // }
+
+    // // Check that brewer is provided
+    // if (!brewer) {
+    //   errorData['brewer'] = 'Brewer is a required field';
+    // }
+
+    // // Check if any additional equipment is provided (format: array) (optional field)
+    // if (additionalEquipment) {
+    //   // Format as array if not already an array
+    //   if (!Array.isArray(additionalEquipment)) {
+    //     additionalEquipment = [additionalEquipment];
+    //   }
+    // }
+    // else {
+    //   additionalEquipment = []; // default to an empty array if not specified
+    // }
+
+    // // Check that steps are provided (format: object)
+    // if (Object.keys(steps).length < 1) {
+    //   errorData['steps'] = 'Steps is a required field';
+    // }
+
+    // -- stop line
+
+
+    try {
+      // Get all fields for new coffee recipe
+      // Note: total of 19 fields but 3 of them are optional
+      let errorData = {};
+      let { imageUrl, recipeName, description, username, email, totalBrewTime, brewYield, brewingMethod, coffeeBeans, coffeeRestPeriod, coffeeAmount, grinder, grindSetting, waterAmount, waterTemperature, additionalIngredients, brewer, additionalEquipment, steps } = await validateFormatRecipeFields(req.body, errorData);
+
+      // Return error message if there is any error so far
+      if (Object.keys(errorData).length > 0) {
+        sendInvalidError(res, errorData);
+        return; // End function
       }
-    }
-    else {
-      imageUrl = getRandomImageUrl();
-    }
 
-    // Check that recipe name is provided (at least 5 characters)
-    if (recipeName) {
-      if (recipeName.length < 5) {
-        errorData['recipeName'] = 'Recipe name must be at least 5 characters';
-      }
-    }
-    else {
-      errorData['recipeName'] = 'Recipe name is a required field';
-    }
-
-    // Check that description is provided (at least 5 characters)
-    if (description) {
-      if (description.length < 5) {
-        errorData['description'] = 'Description must be at least 5 characters';
-      }
-    }
-    else {
-      errorData['description'] = 'Description is a required field';
-    }
-
-    // Check that username is provided (at least 5 characters)
-    if (username) {
-      if (username.length < 5) {
-        errorData['username'] = 'Username must be at least 5 characters';
-      }
-    }
-    else {
-      errorData['username'] = 'Username is a required field';
-    }
-
-    // Check that email is provided
-    if (email) {
-      if (!validateEmail(email)) {
-        errorData['email'] = 'Invalid email address';
-      }
-      else {
-        // Hash email
-        email = await BcryptUtil.hash(email);
-      }
-    }
-    else {
-      errorData['email'] = 'Email is a required field';
-    }
-
-    // Check that total brew time is provided (format: '<num> <unit>')
-    if (totalBrewTime.split(' ').length === 2) {
-      // Check that the time component is numeric
-      if (isNaN(totalBrewTime.split(' ')[0])) {
-        errorData['totalBrewTime'] = 'Invalid value specified for Total Brew Time';
-      }
-    }
-    else {
-      errorData['totalBrewTime'] = 'Total Brew Time is a required field';
-    }
-    
-    // Check that brew yield is provided (format: '<num> <unit>')
-    if (brewYield.split(' ').length === 2) {
-      // Check that the amount component is numeric
-      if (isNaN(brewYield.split(' ')[0])) {
-        errorData['brewYield'] = 'Invalid value specified for Brew Yield';
-      }
-    }
-    else {
-      errorData['brewYield'] = 'Brew Yield is a required field';
-    }
-    
-    // Check that brewing method is provided
-    if (!brewingMethod) {
-      errorData['brewingMethod'] = 'Brewing Method is a required field';
-    }
-
-    // Check that coffee beans are provided (checkbox)
-    if (coffeeBeans) {
-      // Format as array if not already an array
-      if (!Array.isArray(coffeeBeans)) {
-        coffeeBeans = [coffeeBeans];
-      }
-
-      // Convert to an array of ObjectIds
-      coffeeBeans = coffeeBeans.map( id => ObjectId(id));
-    }
-    else {
-      errorData['coffeeBeans'] = 'Coffee Beans is a required field';
-    }
-
-    // Check that coffee rest period is provided (select)
-    if (!coffeeRestPeriod) {
-      errorData['coffeeRestPeriod'] = 'Coffee Rest Period is a required field';
-    }
-
-    // Check that coffee amount is provided (in grams)
-    if (coffeeAmount) {
-      // Check that coffee amount is numeric
-      if (isNaN(coffeeAmount)) {
-        errorData['coffeeAmount'] = 'Invalid value specified for Coffee Amount';
-      }
-    }
-    else {
-      errorData['coffeeAmount'] = 'Coffee Amount is a required field';
-    }
-
-    // Check that grinder is provided
-    if (!grinder) {
-      errorData['grinder'] = 'Grinder is a required field';
-    }
-
-    // Check that grind setting is provided (string since different grinders have different way of specifying)
-    if (!grindSetting) {
-      errorData['grindSetting'] = 'Grind Setting is a required field';
-    }
-
-    // Check that water amount is provided (format: '<num> <unit>')
-    if (waterAmount.split(' ').length === 2) {
-      // Check that amount component is numeric
-      if (isNaN(waterAmount.split(' ')[0])) {
-        errorData['waterAmount'] = 'Invalid value specified for Water Amount';
-      }
-    }
-    else {
-      errorData['waterAmount'] = 'Water Amount is a required field';
-    }
-
-    // Check that water temperature is provided
-    if (waterTemperature) {
-      // Check that water temperature is numeric
-      if (isNaN(waterTemperature)) {
-        errorData['waterTemperature'] = 'Invalid value specified for Water Temperature';
-      }
-    }
-    else {
-      errorData['waterTemperature'] = 'Water Temperature is a required field';
-    }     
-
-    // Check if any additional ingredients are provided (format: array) (optional field)
-    if (additionalIngredients) {
-      // Format as array if not already an array
-      if (!Array.isArray(additionalIngredients)) {
-        additionalIngredients = [additionalIngredients];
-      }
-    }
-    else {
-      additionalIngredients = []; // default to an empty array if not specified
-    }
-
-    // Check that brewer is provided
-    if (!brewer) {
-      errorData['brewer'] = 'Brewer is a required field';
-    }
-
-    // Check if any additional equipment is provided (format: array) (optional field)
-    if (additionalEquipment) {
-      // Format as array if not already an array
-      if (!Array.isArray(additionalEquipment)) {
-        additionalEquipment = [additionalEquipment];
-      }
-    }
-    else {
-      additionalEquipment = []; // default to an empty array if not specified
-    }
-
-    // Check that steps are provided (format: object)
-    if (Object.keys(steps).length < 1) {
-      errorData['steps'] = 'Steps is a required field';
-    }
-
-    // Return error message if there is any error so far
-    if (Object.keys(errorData).length > 0) {
-      sendInvalidError(res, errorData);
-      return; // End function
-    }
-
-    // If no errors, proceed to create a new recipe in database
-    // try {
+      // If no errors, proceed to create a new recipe in database
       let newRecipe = {
         image_url: imageUrl,
         recipe_name: recipeName,
@@ -518,10 +714,10 @@ async function main() {
       let result = await db.collection(DB_COLLECTION.recipes).insertOne(newRecipe);
       res.status(201); // Created
       res.json(result);
-    // }
-    // catch(err) {
-    //   sendDatabaseError(res);
-    // }
+    }
+    catch (err) {
+      sendDatabaseError(res);
+    }
 
   });
 
