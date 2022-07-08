@@ -522,7 +522,7 @@ async function main() {
 	// Endpoint to create a new coffee recipe
 	app.post('/recipes', async function (req, res) {
 		try {
-			// Get all fields for new coffee recipe
+			// Get all fields that can be filled in for new coffee recipe
 			// Note: total of 19 fields but 3 of them are optional
 			let errorData = {};
 			let {
@@ -585,6 +585,80 @@ async function main() {
 				.collection(DB_COLLECTION.recipes)
 				.insertOne(newRecipe);
 			res.status(201); // Created
+			res.json(result);
+		} catch (err) {
+			sendDatabaseError(res);
+		}
+	});
+
+	// Endpoint to update a coffee recipe
+	app.put('/recipes/:recipe_id', async function (req, res) {
+		try {
+			// Get all fields that can be filled in for coffee recipe
+			// Note: total of 19 fields but 3 of them are optional
+			let errorData = {};
+			let {
+				imageUrl,
+				recipeName,
+				description,
+				username,
+				email,
+				totalBrewTime,
+				brewYield,
+				brewingMethod,
+				coffeeBeans,
+				coffeeRestPeriod,
+				coffeeAmount,
+				grinder,
+				grindSetting,
+				waterAmount,
+				waterTemperature,
+				additionalIngredients,
+				brewer,
+				additionalEquipment,
+				steps
+			} = await validateFormatRecipeFields(req.body, errorData);
+
+			// Return error message if there is any error so far
+			if (Object.keys(errorData).length > 0) {
+				sendInvalidError(res, errorData);
+				return; // End function
+			}
+
+			// If no errors, proceed to update recipe in database
+			let updatedRecipe = {
+				image_url: imageUrl,
+				recipe_name: recipeName,
+				description: description,
+				user: {
+					username: username,
+					email: email
+				},
+				date: new Date(), // Set new date time
+				total_brew_time: totalBrewTime,
+				brew_yield: brewYield,
+				brewingMethod: ObjectId(brewingMethod),
+				coffee_beans: coffeeBeans,
+				coffee_rest_period: coffeeRestPeriod,
+				amount_of_coffee: Number(coffeeAmount),
+				grinder: ObjectId(grinder),
+				grind_setting: grindSetting,
+				amount_of_water: waterAmount,
+				water_temperature: Number(waterTemperature),
+				additional_ingredients: additionalIngredients,
+				brewer: ObjectId(brewer),
+				additional_equipment: additionalEquipment
+			};
+
+			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
+				{
+					_id: ObjectId(req.params.recipe_id)
+				},
+				{
+					$set: updatedRecipe
+				}
+			);
+			res.status(200); // OK
 			res.json(result);
 		} catch (err) {
 			sendDatabaseError(res);
