@@ -357,7 +357,7 @@ async function main() {
 		res.send('Welcome to CoffeeTalk API');
 	});
 
-	// Endpoint to retrieve all coffee recipes
+	// GET Endpoint to retrieve all coffee recipes
 	app.get('/recipes', async function (req, res) {
 		// Get query strings
 		// Note: beans is a comma-separated string of ids
@@ -498,7 +498,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve a single coffee recipe by id
+	// GET Endpoint to retrieve a single coffee recipe by id
 	app.get('/recipes/:recipe_id', async function (req, res) {
 		try {
 			// Get coffee recipe record
@@ -519,7 +519,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to create a new coffee recipe
+	// POST Endpoint to create a new coffee recipe
 	app.post('/recipes', async function (req, res) {
 		try {
 			// Get all fields that can be filled in for new coffee recipe
@@ -591,7 +591,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to verify if user has the credential to update/delete recipe
+	// POST Endpoint to verify if user has the credential to update/delete recipe
 	app.post('/recipes/:recipe_id', async function (req, res) {
 		try {
 			// Get hashed email of the recipe's owner
@@ -619,7 +619,7 @@ async function main() {
 
 	});
 
-	// Endpoint to update a coffee recipe
+	// PUT Endpoint to update a coffee recipe
 	app.put('/recipes/:recipe_id', async function (req, res) {
 		try {
 			// Get all fields that can be filled in for coffee recipe
@@ -693,7 +693,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to delete a coffee recipe
+	// DELETE Endpoint to delete a coffee recipe
 	app.delete('/recipes/:recipe_id', async function (req, res) {
 		try {
 			let result = await db.collection(DB_COLLECTION.recipes).deleteOne({
@@ -707,7 +707,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to get hashed email for accessing favorite collections
+	// POST Endpoint to get hashed email for accessing favorite collections
 	app.post('favorites/access', async function (req, res) {
 		// Get user's email
 		let email = req.body.email;
@@ -723,7 +723,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve all favorited coffee recipes of a user
+	// GET Endpoint to retrieve all favorited coffee recipes of a user
 	// Note: User's email is hashed for added security
 	app.get('/favorites/:hash', async function (req, res) {
 		// Get query strings
@@ -788,7 +788,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve all coffee bean records
+	// GET Endpoint to retrieve all coffee bean records
 	app.get('/beans', async function (req, res) {
 		try {
 			const beanRecords = await db
@@ -801,7 +801,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrive coffee bean record by id
+	// GET Endpoint to retrive coffee bean record by id
 	app.get('/beans/:bean_id', async function (req, res) {
 		try {
 			const beanRecord = await getRecordById('beans', req.params.bean_id);
@@ -816,7 +816,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve all coffee grinder records
+	// GET Endpoint to retrieve all coffee grinder records
 	app.get('/grinders', async function (req, res) {
 		try {
 			const grinderRecords = await db
@@ -829,7 +829,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrive coffee grinder record by id
+	// GET Endpoint to retrive coffee grinder record by id
 	app.get('/grinders/:grinder_id', async function (req, res) {
 		try {
 			const grinderRecord = await getRecordById(
@@ -847,7 +847,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve all coffee brewer records
+	// GET Endpoint to retrieve all coffee brewer records
 	app.get('/brewers', async function (req, res) {
 		try {
 			const brewerRecords = await db
@@ -860,7 +860,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrive coffee brewer record by id
+	// GET Endpoint to retrive coffee brewer record by id
 	app.get('/brewers/:brewer_id', async function (req, res) {
 		try {
 			const brewerRecord = await getRecordById(
@@ -878,7 +878,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrieve all brewing methods
+	// GET Endpoint to retrieve all brewing methods
 	app.get('/methods', async function (req, res) {
 		try {
 			const methodRecords = await db
@@ -891,7 +891,7 @@ async function main() {
 		}
 	});
 
-	// Endpoint to retrive brewing method by id
+	// GET Endpoint to retrive brewing method by id
 	app.get('/methods/:method_id', async function (req, res) {
 		try {
 			const methodRecord = await getRecordById(
