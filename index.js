@@ -592,7 +592,7 @@ async function main() {
 	});
 
 	// POST Endpoint to verify if user has the credential to update/delete recipe
-	app.post('/recipes/:recipe_id', async function (req, res) {
+	app.post('/recipes/:recipe_id/access', async function (req, res) {
 		try {
 			// Get hashed email of the recipe's owner
 			let recipeRecord = await getRecordById('recipes', req.params.recipe_id);
