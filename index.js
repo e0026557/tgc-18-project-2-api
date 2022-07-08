@@ -80,8 +80,8 @@ async function main() {
 		);
 	}
 
-	function sendSuccessResponse(res, data) {
-		res.status(200); // OK
+	function sendSuccessResponse(res, code, data) {
+		res.status(code); // either OK or Created
 		res.json({
 			status: 'success',
 			data: data
@@ -492,7 +492,7 @@ async function main() {
 				pages: totalPages
 			};
 
-			sendSuccessResponse(res, data);
+			sendSuccessResponse(res, 200, data);
 		} catch (err) {
 			sendDatabaseError(res);
 		}
@@ -510,7 +510,7 @@ async function main() {
 			if (recipeRecord) {
 				// Populate coffee recipe with fields from referenced documents
 				await populateRecipeFields(recipeRecord);
-				sendSuccessResponse(res, { result: recipeRecord });
+				sendSuccessResponse(res, 200, { result: recipeRecord });
 			} else {
 				sendInvalidError(res, { id: 'Invalid coffee recipe ID' });
 			}
@@ -584,11 +584,39 @@ async function main() {
 			let result = await db
 				.collection(DB_COLLECTION.recipes)
 				.insertOne(newRecipe);
-			res.status(201); // Created
-			res.json(result);
+
+			sendSuccessResponse(res, 201, result);
 		} catch (err) {
 			sendDatabaseError(res);
 		}
+	});
+
+	// Endpoint to verify if user has the credential to update/delete recipe
+	app.post('/recipes/:recipe_id', async function (req, res) {
+		try {
+			// Get hashed email of the recipe's owner
+			let recipeRecord = await getRecordById('recipes', req.params.recipe_id);
+			let hash = recipeRecord.user.email;
+
+			// Get user's email
+			let email = req.body.email;
+
+			// Return invalid error message if no or invalid email provided
+			if (!email || !validateEmail(email)) {
+				sendInvalidError(res, { 'email': 'Invalid email address' });
+			}
+			else {
+				// Verify if email matches hashed email to determine owner of recipe
+				let verified = await BcryptUtil.compareHash(email, hash);
+
+				// Send verification as response
+				sendSuccessResponse(res, 200, {result: verified});
+			}
+		}
+		catch (err) {
+			sendDatabaseError(res);
+		}
+
 	});
 
 	// Endpoint to update a coffee recipe
@@ -658,10 +686,40 @@ async function main() {
 					$set: updatedRecipe
 				}
 			);
-			res.status(200); // OK
-			res.json(result);
+
+			sendSuccessResponse(res, 200, result);
 		} catch (err) {
 			sendDatabaseError(res);
+		}
+	});
+
+	// Endpoint to delete a coffee recipe
+	app.delete('/recipes/:recipe_id', async function (req, res) {
+		try {
+			let result = await db.collection(DB_COLLECTION.recipes).deleteOne({
+				'_id': ObjectId(req.params.recipe_id)
+			});
+
+			sendSuccessResponse(res, 200, result);
+		}
+		catch (err) {
+			sendDatabaseError(res);
+		}
+	});
+
+	// Endpoint to get hashed email for accessing favorite collections
+	app.post('favorites/access', async function (req, res) {
+		// Get user's email
+		let email = req.body.email;
+
+		// If no or invalid email, return invalid error message
+		if (!email || !validateEmail(email)) {
+			sendInvalidError(res, { 'email': 'Invalid email address' });
+		}
+		else {
+			// Return hashed email for accessing favorites collection
+			let hash = await BcryptUtil.hash(email);
+			sendSuccessResponse(res, 201, {hash: hash});
 		}
 	});
 
@@ -715,7 +773,7 @@ async function main() {
 					pages: totalPages
 				};
 
-				sendSuccessResponse(res, data);
+				sendSuccessResponse(res, 200, data);
 			} else {
 				// Assume that hashed email is correct and that there is no favorited coffee recipes yet
 				let data = {
@@ -723,7 +781,7 @@ async function main() {
 					pages: 1
 				};
 
-				sendSuccessResponse(res, data);
+				sendSuccessResponse(res, 200, data);
 			}
 		} catch (err) {
 			sendDatabaseError(res);
@@ -737,7 +795,7 @@ async function main() {
 				.collection(DB_COLLECTION.beans)
 				.find({})
 				.toArray();
-			sendSuccessResponse(res, { result: beanRecords });
+			sendSuccessResponse(res, 200, { result: beanRecords });
 		} catch (err) {
 			sendDatabaseError(res);
 		}
@@ -749,7 +807,7 @@ async function main() {
 			const beanRecord = await getRecordById('beans', req.params.bean_id);
 
 			if (beanRecord) {
-				sendSuccessResponse(res, { result: beanRecord });
+				sendSuccessResponse(res, 200, { result: beanRecord });
 			} else {
 				sendInvalidError(res, { id: 'Invalid coffee bean ID' });
 			}
@@ -765,7 +823,7 @@ async function main() {
 				.collection(DB_COLLECTION.grinders)
 				.find({})
 				.toArray();
-			sendSuccessResponse(res, { result: grinderRecords });
+			sendSuccessResponse(res, 200, { result: grinderRecords });
 		} catch (err) {
 			sendDatabaseError(res);
 		}
@@ -780,7 +838,7 @@ async function main() {
 			);
 
 			if (grinderRecord) {
-				sendSuccessResponse(res, { result: grinderRecord });
+				sendSuccessResponse(res, 200, { result: grinderRecord });
 			} else {
 				sendInvalidError(res, { id: 'Invalid coffee grinder ID' });
 			}
@@ -796,7 +854,7 @@ async function main() {
 				.collection(DB_COLLECTION.brewers)
 				.find({})
 				.toArray();
-			sendSuccessResponse(res, { result: brewerRecords });
+			sendSuccessResponse(res, 200, { result: brewerRecords });
 		} catch (err) {
 			sendDatabaseError(res);
 		}
@@ -811,7 +869,7 @@ async function main() {
 			);
 
 			if (brewerRecord) {
-				sendSuccessResponse(res, { result: brewerRecord });
+				sendSuccessResponse(res, 200, { result: brewerRecord });
 			} else {
 				sendInvalidError(res, { id: 'Invalid coffee brewer ID' });
 			}
@@ -827,7 +885,7 @@ async function main() {
 				.collection(DB_COLLECTION.methods)
 				.find({})
 				.toArray();
-			sendSuccessResponse(res, { result: methodRecords });
+			sendSuccessResponse(res, 200, { result: methodRecords });
 		} catch (err) {
 			sendDatabaseError(res);
 		}
@@ -842,7 +900,7 @@ async function main() {
 			);
 
 			if (methodRecord) {
-				sendSuccessResponse(res, { result: methodRecord });
+				sendSuccessResponse(res, 200, { result: methodRecord });
 			} else {
 				sendInvalidError(res, { id: 'Invalid brewing method ID' });
 			}
