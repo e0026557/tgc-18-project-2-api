@@ -124,6 +124,37 @@ async function main() {
 		return false;
 	}
 
+	async function computeAverageRating(recipeId, newRating) {
+		// Returns the recalculated the new average_rating field of the recipe given new rating
+		let recipeRecord = await db
+			.collection(DB_COLLECTION.recipes)
+			.findOne(
+				{
+					_id: ObjectId(recipeId)
+				},
+				{
+					projection: {
+						'reviews.rating': 1
+					}
+				}
+			);
+
+		let totalRating = 0;
+		for (let review of recipeRecord.reviews) {
+			totalRating += parseInt(review.rating);
+		}
+
+		totalRating += newRating; // Include rating from new review
+
+		let newAverageRating = (
+			totalRating /
+			(recipeRecord.reviews.length + 1)
+		).toFixed(1); // Round to nearest 1 decimal place
+		newAverageRating = parseFloat(newAverageRating); // Convert back to float
+
+		return newAverageRating;
+	}
+
 	// Function to validate and format coffee recipe fields for posting to database
 	async function validateFormatRecipeFields(fieldObject, errorData) {
 		// Get all fields for new coffee recipe
@@ -765,32 +796,8 @@ async function main() {
 				email: email
 			};
 
-			// Recalculate the new average_rating field of the recipe
-			let recipeRecord = await db
-				.collection(DB_COLLECTION.recipes)
-				.findOne(
-					{
-						_id: ObjectId(req.params.recipe_id)
-					},
-					{
-						projection: {
-							'reviews.rating': 1
-						}
-					}
-				);
-
-			let totalRating = 0;
-			for (let review of recipeRecord.reviews) {
-				totalRating += parseInt(review.rating);
-			}
-
-			totalRating += rating; // Include rating from new review
-
-			let newAverageRating = (
-				totalRating /
-				(recipeRecord.reviews.length + 1)
-			).toFixed(1); // Round to nearest 1 decimal place
-			newAverageRating = parseFloat(newAverageRating); // Convert back to float
+			// Get new average rating
+			let newAverageRating = await computeAverageRating(req.params.recipe_id, rating);
 
 			// Update recipe with new average rating and review element
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
