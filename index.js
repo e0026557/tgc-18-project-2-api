@@ -377,6 +377,30 @@ async function main() {
 		};
 	}
 
+	function validateFormatReviewFields(fields) {
+		let {title, content, rating} = fields;
+		let errorData = {};
+
+		// Check the fields for review content
+		// - title and content must be at least 5 characters long
+		if (!title || title.length < 5) {
+			errorData['title'] = 'Title must be at least 5 characters';
+		}
+
+		if (!content || content.length < 5) {
+			errorData['content'] = 'Content must be at least 5 characters';
+		}
+
+		// - rating must be a numeric value from 1 to 5
+		// Convert rating to number
+		rating = parseInt(rating);
+		if (!rating || rating < 1 || rating > 5) {
+			errorData['rating'] = 'Rating must be an integer from 1 to 5';
+		}
+
+		return {title, content, rating, errorData};
+	}
+
 	function getRandomImageUrl() {
 		let imageCount = IMAGE_URLS.length;
 		let index = Math.floor(Math.random() * imageCount);
@@ -742,42 +766,26 @@ async function main() {
 	// POST Endpoint to create a new review for a recipe
 	app.post('/recipes/:recipe_id/reviews', async function (req, res) {
 		try {
-			// Get all fields required for recipe review
-			// Note: username and email are used for identification purposes (cannot be changed)
-			let { title, content, rating, username, email } = req.body;
-
-			let errorData = {};
+			// Get all fields required for recipe review and error log
+			// - Validate and format fields
+			let {title, content, rating, errorData} = validateFormatReviewFields(req.body);
 
 			// Check that username and email are valid
+			// Note: username and email are used for identification purposes (cannot be changed)
+			let { username, email } = req.body;
+
 			// - Username must be at least 5 characters long
-			// - valid email address
 			if (!username || username.length < 5) {
 				errorData['username'] =
-					'Username must be at least 5 characters';
+				'Username must be at least 5 characters';
 			}
-
+			
+			// - Validate email address
 			if (validateEmail(email)) {
 				// Convert email to hash if valid email provided
 				email = await BcryptUtil.hash(email);
 			} else {
 				errorData['email'] = 'Invalid email address';
-			}
-
-			// Check the fields for review content
-			// - title and content must be at least 5 characters long
-			if (!title || title.length < 5) {
-				errorData['title'] = 'Title must be at least 5 characters';
-			}
-
-			if (!content || content.length < 5) {
-				errorData['content'] = 'Content must be at least 5 characters';
-			}
-
-			// - rating must be a numeric value from 1 to 5
-			// Convert rating to number
-			rating = parseInt(rating);
-			if (!rating || rating < 1 || rating > 5) {
-				errorData['rating'] = 'Rating must be an integer from 1 to 5';
 			}
 
 			// If there are any errors, return error message
