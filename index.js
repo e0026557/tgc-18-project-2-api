@@ -831,26 +831,19 @@ async function main() {
 	});
 
 	// --- Routes: Favorites ---
-	// POST Endpoint to get hashed email for accessing favorite collections
-	app.post('favorites/access', async function (req, res) {
-		// Get user's email
-		let email = req.body.email;
-
-		// If no or invalid email, return invalid error message
-		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, { email: 'Invalid email address' });
-		} else {
-			// Return hashed email for accessing favorites collection
-			let hash = await BcryptUtil.hash(email);
-			sendSuccessResponse(res, 201, { hash: hash });
-		}
-	});
-
 	// GET Endpoint to retrieve all favorited coffee recipes of a user
-	// Note: User's email is hashed for added security
-	app.get('/favorites/:hash', async function (req, res) {
+	// Note: Unable to use hashed email as search query since hash is always changing despite same key
+	// (currently using email for favorites collection)
+	app.get('/favorites/:email', async function (req, res) {
 		// Get query strings
 		let page = parseInt(req.query.page) || 1; // default page number is 1 if not specified
+
+		// Validate if email is valid
+		let email = req.params.email;
+		if (!email || !validateEmail(email)) {
+			sendInvalidError(res, {'email': 'Invalid email address'});
+			return; // End function
+		}
 
 		try {
 			// Get user's favorited coffee recipes
@@ -858,7 +851,7 @@ async function main() {
 				.collection(DB_COLLECTION.favorites)
 				.findOne(
 					{
-						user_email: req.params.hash
+						user_email: email
 					},
 					{
 						projection: {
@@ -898,7 +891,7 @@ async function main() {
 
 				sendSuccessResponse(res, 200, data);
 			} else {
-				// Assume that hashed email is correct and that there is no favorited coffee recipes yet
+				// Assume there is no favorited coffee recipes yet (favorites collection not created yet)
 				let data = {
 					result: null,
 					pages: 1
@@ -909,6 +902,62 @@ async function main() {
 		} catch (err) {
 			sendDatabaseError(res);
 		}
+	});
+
+	// POST Endpoint to add recipe to favorites
+	app.post('/favorites/:email', async function (req, res) {
+		// Get recipe ID to be added to favorites collection
+		let recipeId = req.body.recipeId;
+
+		// Validate email
+		let email = req.params.email;
+		if (!email || !validateEmail(email)) {
+			sendInvalidError(res, {'email': 'Invalid email address'});
+			return; // End function
+		}
+
+		// Check if favorites collection exists for the user
+		let favoriteRecord = await db.collection(DB_COLLECTION.favorites).findOne({
+			user_email: email
+		});
+
+		// If favorites collection exists, add coffee recipe ID to coffee_recipes array
+		if (favoriteRecord) {
+			// Check if recipe ID to be added already exists
+			let document = await db.collection(DB_COLLECTION.favorites).findOne({
+				'_id': favoriteRecord._id,
+				'coffee_recipes': {
+					'$in': [ObjectId(recipeId)]
+				}
+			});
+
+			if (document) {
+				sendInvalidError(res, {'recipeId': 'Recipe ID is already in favorites collection'});
+				return; // End function
+			}
+
+			let result = await db.collection(DB_COLLECTION.favorites).updateOne({
+				'_id': ObjectID(favoriteRecord._id)
+			}, {
+				'$push': {
+					'coffee_recipes': ObjectId(recipeId)
+				}
+			});
+
+			sendSuccessResponse(res, 200, result);
+		}
+		else {
+			// If favorites collection does not exist, create a new favorites collection
+			let newFavoriteRecord = {
+				user_email: email,
+				coffee_recipes: [ObjectId(recipeId)]
+			};
+
+			let result = await db.collection(DB_COLLECTION.favorites).insertOne(newFavoriteRecord);
+
+			sendSuccessResponse(res, 201, result);
+		}
+
 	});
 
 	// --- Routes: Beans ---
