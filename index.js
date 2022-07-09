@@ -732,7 +732,8 @@ async function main() {
 				water_temperature: Number(waterTemperature),
 				additional_ingredients: additionalIngredients,
 				brewer: ObjectId(brewer),
-				additional_equipment: additionalEquipment
+				additional_equipment: additionalEquipment,
+				steps: steps
 			};
 
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
@@ -827,45 +828,6 @@ async function main() {
 		} catch (err) {
 			sendDatabaseError(res);
 		}
-	});
-
-	// POST Endpoint to check if user is authorised to edit/delete review
-	app.post('/recipes/:recipe_id/reviews/:index/access', async function (req, res) {
-		try {
-			// Get recipe review
-			let index = parseInt(req.params.index);
-			let recipeRecord = await db.collection(DB_COLLECTION.recipes).findOne({
-				'_id': ObjectId(req.params.recipe_id)
-			}, {
-				'projection': {
-					'reviews': 1
-				}
-			});
-
-			let reviewRecord = recipeRecord.reviews[index];
-
-			// Get email of user
-			let email = req.body.email;
-
-			// Return invalid error message if no or invalid email provided
-			if (!email || !validateEmail(email)) {
-				sendInvalidError(res, { email: 'Invalid email address' });
-			} else {
-				// Verify if email matches hashed email to determine owner of recipe
-				let verified = await BcryptUtil.compareHash(email, reviewRecord.email);
-
-				// Send verification as response
-				sendSuccessResponse(res, 200, { result: verified });
-			}
-		}
-		catch (err) {
-			sendDatabaseError(res);
-		}
-	});
-
-	// PUT Endpoint to update review for a recipe
-	app.put('/recipes/:recipe_id/reviews/:index', async function (req, res) {
-		// TODO
 	});
 
 	// --- Routes: Favorites ---
