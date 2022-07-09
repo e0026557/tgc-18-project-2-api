@@ -357,6 +357,7 @@ async function main() {
 		res.send('Welcome to CoffeeTalk API');
 	});
 
+	// --- Routes: Recipes ---
 	// GET Endpoint to retrieve all coffee recipes
 	app.get('/recipes', async function (req, res) {
 		// Get query strings
@@ -595,7 +596,10 @@ async function main() {
 	app.post('/recipes/:recipe_id/access', async function (req, res) {
 		try {
 			// Get hashed email of the recipe's owner
-			let recipeRecord = await getRecordById('recipes', req.params.recipe_id);
+			let recipeRecord = await getRecordById(
+				'recipes',
+				req.params.recipe_id
+			);
 			let hash = recipeRecord.user.email;
 
 			// Get user's email
@@ -603,20 +607,17 @@ async function main() {
 
 			// Return invalid error message if no or invalid email provided
 			if (!email || !validateEmail(email)) {
-				sendInvalidError(res, { 'email': 'Invalid email address' });
-			}
-			else {
+				sendInvalidError(res, { email: 'Invalid email address' });
+			} else {
 				// Verify if email matches hashed email to determine owner of recipe
 				let verified = await BcryptUtil.compareHash(email, hash);
 
 				// Send verification as response
-				sendSuccessResponse(res, 200, {result: verified});
+				sendSuccessResponse(res, 200, { result: verified });
 			}
-		}
-		catch (err) {
+		} catch (err) {
 			sendDatabaseError(res);
 		}
-
 	});
 
 	// PUT Endpoint to update a coffee recipe
@@ -697,16 +698,122 @@ async function main() {
 	app.delete('/recipes/:recipe_id', async function (req, res) {
 		try {
 			let result = await db.collection(DB_COLLECTION.recipes).deleteOne({
-				'_id': ObjectId(req.params.recipe_id)
+				_id: ObjectId(req.params.recipe_id)
 			});
 
 			sendSuccessResponse(res, 200, result);
-		}
-		catch (err) {
+		} catch (err) {
 			sendDatabaseError(res);
 		}
 	});
 
+	// --- Routes: Reviews (Part of recipes) ---
+	// POST Endpoint to create a new review for a recipe
+	app.post('/recipes/:recipe_id/reviews', async function (req, res) {
+		try {
+			// Get all fields required for recipe review
+			// Note: username and email are used for identification purposes (cannot be changed)
+			let { title, content, rating, username, email } = req.body;
+
+			let errorData = {};
+
+			// Check that username and email are valid
+			// - Username must be at least 5 characters long
+			// - valid email address
+			if (!username || username.length < 5) {
+				errorData['username'] =
+					'Username must be at least 5 characters';
+			}
+
+			if (validateEmail(email)) {
+				// Convert email to hash if valid email provided
+				email = await BcryptUtil.hash(email);
+			} else {
+				errorData['email'] = 'Invalid email address';
+			}
+
+			// Check the fields for review content
+			// - title and content must be at least 5 characters long
+			if (!title || title.length < 5) {
+				errorData['title'] = 'Title must be at least 5 characters';
+			}
+
+			if (!content || content.length < 5) {
+				errorData['content'] = 'Content must be at least 5 characters';
+			}
+
+			// - rating must be a numeric value from 1 to 5
+			// Convert rating to number
+			rating = parseInt(rating);
+			if (!rating || rating < 1 || rating > 5) {
+				errorData['rating'] = 'Rating must be an integer from 1 to 5';
+			}
+
+			// If there are any errors, return error message
+			if (Object.keys(errorData).length > 0) {
+				sendInvalidError(res, errorData);
+				return; // End function
+			}
+
+			// Create a new review object
+			let newReview = {
+				date: new Date(),
+				title: title,
+				content: content,
+				rating: rating,
+				username: username,
+				email: email
+			};
+
+			// Recalculate the new average_rating field of the recipe
+			let recipeRecord = await db
+				.collection(DB_COLLECTION.recipes)
+				.findOne(
+					{
+						_id: ObjectId(req.params.recipe_id)
+					},
+					{
+						projection: {
+							'reviews.rating': 1
+						}
+					}
+				);
+
+			let totalRating = 0;
+			for (let review of recipeRecord.reviews) {
+				totalRating += parseInt(review.rating);
+			}
+
+			totalRating += rating; // Include rating from new review
+
+			let newAverageRating = (
+				totalRating /
+				(recipeRecord.reviews.length + 1)
+			).toFixed(1); // Round to nearest 1 decimal place
+			newAverageRating = parseFloat(newAverageRating); // Convert back to float
+
+			// Update recipe with new average rating and review element
+			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
+				{
+					_id: ObjectId(req.params.recipe_id)
+				},
+				{
+					$push: {
+						reviews: newReview
+					},
+					$set: {
+						average_rating: newAverageRating
+					}
+				}
+			);
+
+			sendSuccessResponse(res, 201, result);
+		} catch (err) {
+			sendDatabaseError(res);
+		}
+	});
+
+	// --- Routes: Favorites ---
 	// POST Endpoint to get hashed email for accessing favorite collections
 	app.post('favorites/access', async function (req, res) {
 		// Get user's email
@@ -714,12 +821,11 @@ async function main() {
 
 		// If no or invalid email, return invalid error message
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, { 'email': 'Invalid email address' });
-		}
-		else {
+			sendInvalidError(res, { email: 'Invalid email address' });
+		} else {
 			// Return hashed email for accessing favorites collection
 			let hash = await BcryptUtil.hash(email);
-			sendSuccessResponse(res, 201, {hash: hash});
+			sendSuccessResponse(res, 201, { hash: hash });
 		}
 	});
 
@@ -788,6 +894,7 @@ async function main() {
 		}
 	});
 
+	// --- Routes: Beans ---
 	// GET Endpoint to retrieve all coffee bean records
 	app.get('/beans', async function (req, res) {
 		try {
@@ -816,6 +923,7 @@ async function main() {
 		}
 	});
 
+	// --- Routes: Grinders ---
 	// GET Endpoint to retrieve all coffee grinder records
 	app.get('/grinders', async function (req, res) {
 		try {
@@ -847,6 +955,7 @@ async function main() {
 		}
 	});
 
+	// --- Routes: Brewers ---
 	// GET Endpoint to retrieve all coffee brewer records
 	app.get('/brewers', async function (req, res) {
 		try {
@@ -878,6 +987,7 @@ async function main() {
 		}
 	});
 
+	// --- Routes: Methods ---
 	// GET Endpoint to retrieve all brewing methods
 	app.get('/methods', async function (req, res) {
 		try {
