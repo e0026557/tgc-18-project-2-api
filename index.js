@@ -841,7 +841,7 @@ async function main() {
 		// Validate if email is valid
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, {'email': 'Invalid email address'});
+			sendInvalidError(res, { 'email': 'Invalid email address' });
 			return; // End function
 		}
 
@@ -912,50 +912,101 @@ async function main() {
 		// Validate email
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, {'email': 'Invalid email address'});
+			sendInvalidError(res, { 'email': 'Invalid email address' });
 			return; // End function
 		}
 
-		// Check if favorites collection exists for the user
-		let favoriteRecord = await db.collection(DB_COLLECTION.favorites).findOne({
-			user_email: email
-		});
+		try {
+			// Check if favorites collection exists for the user
+			let favoriteRecord = await db.collection(DB_COLLECTION.favorites).findOne({
+				user_email: email
+			});
 
-		// If favorites collection exists, add coffee recipe ID to coffee_recipes array
-		if (favoriteRecord) {
-			// Check if recipe ID to be added already exists
+			// If favorites collection exists, add coffee recipe ID to coffee_recipes array
+			if (favoriteRecord) {
+				// Check if recipe ID to be added already exists
+				let document = await db.collection(DB_COLLECTION.favorites).findOne({
+					'_id': favoriteRecord._id,
+					'coffee_recipes': {
+						'$in': [ObjectId(recipeId)]
+					}
+				});
+
+				if (document) {
+					sendInvalidError(res, { 'recipeId': 'Recipe ID is already in favorites collection' });
+					return; // End function
+				}
+
+				let result = await db.collection(DB_COLLECTION.favorites).updateOne({
+					'_id': ObjectID(favoriteRecord._id)
+				}, {
+					'$push': {
+						'coffee_recipes': ObjectId(recipeId)
+					}
+				});
+
+				sendSuccessResponse(res, 200, result);
+			}
+			else {
+				// If favorites collection does not exist, create a new favorites collection
+				let newFavoriteRecord = {
+					user_email: email,
+					coffee_recipes: [ObjectId(recipeId)]
+				};
+
+				let result = await db.collection(DB_COLLECTION.favorites).insertOne(newFavoriteRecord);
+
+				sendSuccessResponse(res, 201, result);
+			}
+		}
+		catch (err) {
+			sendDatabaseError(res);
+		}
+
+	});
+
+	// DELETE Endpoint to remove recipe from favorites
+	app.delete('/favorites/:email', async function (req, res) {
+		// Get recipe ID to be added to favorites collection
+		let recipeId = req.body.recipeId;
+
+		// Validate email
+		let email = req.params.email;
+		if (!email || !validateEmail(email)) {
+			sendInvalidError(res, { 'email': 'Invalid email address' });
+			return; // End function
+		}
+
+		try {
+			// Check if recipe ID to be deleted exists
 			let document = await db.collection(DB_COLLECTION.favorites).findOne({
-				'_id': favoriteRecord._id,
+				'user_email': email,
 				'coffee_recipes': {
 					'$in': [ObjectId(recipeId)]
 				}
 			});
 
-			if (document) {
-				sendInvalidError(res, {'recipeId': 'Recipe ID is already in favorites collection'});
+			if (!document) {
+				sendInvalidError(res, { 'recipeId': 'Recipe ID does not exist in favorites collection' });
 				return; // End function
 			}
 
 			let result = await db.collection(DB_COLLECTION.favorites).updateOne({
-				'_id': ObjectID(favoriteRecord._id)
+				'user_email': email,
+				'coffee_recipes': {
+					'$in': [ObjectId(recipeId)]
+				}
 			}, {
-				'$push': {
+				'$pull': {
 					'coffee_recipes': ObjectId(recipeId)
 				}
 			});
 
 			sendSuccessResponse(res, 200, result);
+
 		}
-		else {
-			// If favorites collection does not exist, create a new favorites collection
-			let newFavoriteRecord = {
-				user_email: email,
-				coffee_recipes: [ObjectId(recipeId)]
-			};
-
-			let result = await db.collection(DB_COLLECTION.favorites).insertOne(newFavoriteRecord);
-
-			sendSuccessResponse(res, 201, result);
+		catch (err) {
+			sendDatabaseError(res);
 		}
 
 	});
