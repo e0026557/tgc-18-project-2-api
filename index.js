@@ -5,6 +5,7 @@ require('dotenv').config();
 const MongoUtil = require('./utilities/MongoUtil');
 const ObjectId = require('mongodb').ObjectId;
 const BcryptUtil = require('./utilities/BcryptUtil');
+const { ObjectID } = require('bson');
 
 // --- Setup Express App ---
 const app = express();
@@ -378,7 +379,7 @@ async function main() {
 	}
 
 	function validateFormatReviewFields(fields) {
-		let {title, content, rating} = fields;
+		let { title, content, rating } = fields;
 		let errorData = {};
 
 		// Check the fields for review content
@@ -398,7 +399,7 @@ async function main() {
 			errorData['rating'] = 'Rating must be an integer from 1 to 5';
 		}
 
-		return {title, content, rating, errorData};
+		return { title, content, rating, errorData };
 	}
 
 	function getRandomImageUrl() {
@@ -768,7 +769,7 @@ async function main() {
 		try {
 			// Get all fields required for recipe review and error log
 			// - Validate and format fields
-			let {title, content, rating, errorData} = validateFormatReviewFields(req.body);
+			let { title, content, rating, errorData } = validateFormatReviewFields(req.body);
 
 			// Check that username and email are valid
 			// Note: username and email are used for identification purposes (cannot be changed)
@@ -777,9 +778,9 @@ async function main() {
 			// - Username must be at least 5 characters long
 			if (!username || username.length < 5) {
 				errorData['username'] =
-				'Username must be at least 5 characters';
+					'Username must be at least 5 characters';
 			}
-			
+
 			// - Validate email address
 			if (validateEmail(email)) {
 				// Convert email to hash if valid email provided
@@ -826,6 +827,45 @@ async function main() {
 		} catch (err) {
 			sendDatabaseError(res);
 		}
+	});
+
+	// POST Endpoint to check if user is authorised to edit/delete review
+	app.post('/recipes/:recipe_id/reviews/:index/access', async function (req, res) {
+		try {
+			// Get recipe review
+			let index = parseInt(req.params.index);
+			let recipeRecord = await db.collection(DB_COLLECTION.recipes).findOne({
+				'_id': ObjectId(req.params.recipe_id)
+			}, {
+				'projection': {
+					'reviews': 1
+				}
+			});
+
+			let reviewRecord = recipeRecord.reviews[index];
+
+			// Get email of user
+			let email = req.body.email;
+
+			// Return invalid error message if no or invalid email provided
+			if (!email || !validateEmail(email)) {
+				sendInvalidError(res, { email: 'Invalid email address' });
+			} else {
+				// Verify if email matches hashed email to determine owner of recipe
+				let verified = await BcryptUtil.compareHash(email, reviewRecord.email);
+
+				// Send verification as response
+				sendSuccessResponse(res, 200, { result: verified });
+			}
+		}
+		catch (err) {
+			sendDatabaseError(res);
+		}
+	});
+
+	// PUT Endpoint to update review for a recipe
+	app.put('/recipes/:recipe_id/reviews/:index', async function (req, res) {
+		// TODO
 	});
 
 	// --- Routes: Favorites ---
