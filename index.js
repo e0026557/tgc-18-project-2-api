@@ -127,18 +127,16 @@ async function main() {
 
 	async function computeAverageRating(recipeId, newRating) {
 		// Returns the recalculated the new average_rating field of the recipe given new rating
-		let recipeRecord = await db
-			.collection(DB_COLLECTION.recipes)
-			.findOne(
-				{
-					_id: ObjectId(recipeId)
-				},
-				{
-					projection: {
-						'reviews.rating': 1
-					}
+		let recipeRecord = await db.collection(DB_COLLECTION.recipes).findOne(
+			{
+				_id: ObjectId(recipeId)
+			},
+			{
+				projection: {
+					'reviews.rating': 1
 				}
-			);
+			}
+		);
 
 		let totalRating = 0;
 		for (let review of recipeRecord.reviews) {
@@ -156,16 +154,17 @@ async function main() {
 		return newAverageRating;
 	}
 
-	// Function to validate and format coffee recipe fields for posting to database
-	async function validateFormatRecipeFields(fieldObject, errorData) {
-		// Get all fields for new coffee recipe
-		// Note: total of 19 fields but 3 of them are optional
+	// Function to validate and format coffee recipe fields (excluding username and email)
+	async function validateFormatRecipeFields(fieldObject) {
+		// Initialise an error log
+		let errorData = {};
+
+		// Get all fields for new coffee recipe (excluding username and email)
+		// Note: Total of 17 fields but 3 of them are optional
 		let {
 			imageUrl,
 			recipeName,
 			description,
-			username,
-			email,
 			totalBrewTime,
 			brewYield,
 			brewingMethod,
@@ -212,32 +211,13 @@ async function main() {
 			errorData['description'] = 'Description is a required field';
 		}
 
-		// Check that username is provided (at least 5 characters)
-		if (username) {
-			if (username.length < 5) {
-				errorData['username'] =
-					'Username must be at least 5 characters';
-			}
-		} else {
-			errorData['username'] = 'Username is a required field';
-		}
-
-		// Check that email is provided
-		if (email) {
-			if (!validateEmail(email)) {
-				errorData['email'] = 'Invalid email address';
-			} else {
-				// Hash email
-				email = await BcryptUtil.hash(email);
-			}
-		} else {
-			errorData['email'] = 'Email is a required field';
-		}
-
 		// Check that total brew time is provided (format: '<num> <unit>')
 		if (totalBrewTime.split(' ').length === 2) {
 			// Check that the time component is numeric
-			if (isNaN(totalBrewTime.split(' ')[0])) {
+			if (
+				!totalBrewTime.split(' ')[0] ||
+				isNaN(totalBrewTime.split(' ')[0])
+			) {
 				errorData['totalBrewTime'] =
 					'Invalid value specified for Total Brew Time';
 			}
@@ -248,7 +228,7 @@ async function main() {
 		// Check that brew yield is provided (format: '<num> <unit>')
 		if (brewYield.split(' ').length === 2) {
 			// Check that the amount component is numeric
-			if (isNaN(brewYield.split(' ')[0])) {
+			if (!brewYield.split(' ')[0] || isNaN(brewYield.split(' ')[0])) {
 				errorData['brewYield'] =
 					'Invalid value specified for Brew Yield';
 			}
@@ -261,17 +241,16 @@ async function main() {
 			errorData['brewingMethod'] = 'Brewing Method is a required field';
 		}
 
-		// Check that coffee beans are provided (checkbox)
-		if (coffeeBeans) {
-			// Format as array if not already an array
-			if (!Array.isArray(coffeeBeans)) {
-				coffeeBeans = [coffeeBeans];
+		// Check that coffee beans are provided (array)
+		if (Array.isArray(coffeeBeans)) {
+			if (coffeeBeans.length > 0) {
+				// Map to an array of ObjectIds
+				coffeeBeans = coffeeBeans.map((id) => ObjectId(id));
+			} else {
+				errorData['coffeeBeans'] = 'Coffee Beans is a required field';
 			}
-
-			// Convert to an array of ObjectIds
-			coffeeBeans = coffeeBeans.map((id) => ObjectId(id));
 		} else {
-			errorData['coffeeBeans'] = 'Coffee Beans is a required field';
+			errorData['coffeeBeans'] = 'Coffee Beans must be an array';
 		}
 
 		// Check that coffee rest period is provided (select)
@@ -304,7 +283,10 @@ async function main() {
 		// Check that water amount is provided (format: '<num> <unit>')
 		if (waterAmount.split(' ').length === 2) {
 			// Check that amount component is numeric
-			if (isNaN(waterAmount.split(' ')[0])) {
+			if (
+				!waterAmount.split(' ')[0] ||
+				isNaN(waterAmount.split(' ')[0])
+			) {
 				errorData['waterAmount'] =
 					'Invalid value specified for Water Amount';
 			}
@@ -324,11 +306,12 @@ async function main() {
 				'Water Temperature is a required field';
 		}
 
-		// Check if any additional ingredients are provided (format: array) (optional field)
+		// Check if any additional ingredients are provided (array) (optional field)
 		if (additionalIngredients) {
-			// Format as array if not already an array
+			// Check that additional ingredients is an array if specified
 			if (!Array.isArray(additionalIngredients)) {
-				additionalIngredients = [additionalIngredients];
+				errorData['additionalIngredients'] =
+					'Additional Ingredients must be an array';
 			}
 		} else {
 			additionalIngredients = []; // default to an empty array if not specified
@@ -339,28 +322,34 @@ async function main() {
 			errorData['brewer'] = 'Brewer is a required field';
 		}
 
-		// Check if any additional equipment is provided (format: array) (optional field)
+		// Check if any additional equipment is provided (array) (optional field)
 		if (additionalEquipment) {
-			// Format as array if not already an array
+			// Check that additional equipment is an array if specified
 			if (!Array.isArray(additionalEquipment)) {
-				additionalEquipment = [additionalEquipment];
+				errorData['additionalEquipment'] =
+					'Additional Equipment must be an array';
 			}
 		} else {
 			additionalEquipment = []; // default to an empty array if not specified
 		}
 
-		// Check that steps are provided (format: object)
-		if (Object.keys(steps).length < 1) {
+		// Check that steps are provided (array)
+		if (steps) {
+			// Check that steps is an array and not empty
+			if (!Array.isArray(steps)) {
+				errorData['steps'] = 'Steps must be an array';
+			} else if (steps.length === 0) {
+				errorData['steps'] = 'Steps cannot be an empty array';
+			}
+		} else {
 			errorData['steps'] = 'Steps is a required field';
 		}
 
-		// Return all formatted fields
+		// Return all formatted fields and error log
 		return {
 			imageUrl,
 			recipeName,
 			description,
-			username,
-			email,
 			totalBrewTime,
 			brewYield,
 			brewingMethod,
@@ -374,7 +363,8 @@ async function main() {
 			additionalIngredients,
 			brewer,
 			additionalEquipment,
-			steps
+			steps,
+			errorData
 		};
 	}
 
@@ -579,15 +569,12 @@ async function main() {
 	// POST Endpoint to create a new coffee recipe
 	app.post('/recipes', async function (req, res) {
 		try {
-			// Get all fields that can be filled in for new coffee recipe
-			// Note: total of 19 fields but 3 of them are optional
-			let errorData = {};
+			// Get all fields that can be filled in for new coffee recipe and error log
+			// Note: Total of 17 fields but 3 of them are optional
 			let {
 				imageUrl,
 				recipeName,
 				description,
-				username,
-				email,
 				totalBrewTime,
 				brewYield,
 				brewingMethod,
@@ -601,8 +588,33 @@ async function main() {
 				additionalIngredients,
 				brewer,
 				additionalEquipment,
-				steps
-			} = await validateFormatRecipeFields(req.body, errorData);
+				steps,
+				errorData
+			} = await validateFormatRecipeFields(req.body);
+
+			// Validate username and email
+			let { username, email } = req.body;
+			// Check that username is provided (at least 5 characters)
+			if (username) {
+				if (username.length < 5) {
+					errorData['username'] =
+						'Username must be at least 5 characters';
+				}
+			} else {
+				errorData['username'] = 'Username is a required field';
+			}
+
+			// Check that email is provided
+			if (email) {
+				if (!validateEmail(email)) {
+					errorData['email'] = 'Invalid email address';
+				} else {
+					// Hash email
+					email = await BcryptUtil.hash(email);
+				}
+			} else {
+				errorData['email'] = 'Email is a required field';
+			}
 
 			// Return error message if there is any error so far
 			if (Object.keys(errorData).length > 0) {
@@ -679,15 +691,13 @@ async function main() {
 	// PUT Endpoint to update a coffee recipe
 	app.put('/recipes/:recipe_id', async function (req, res) {
 		try {
-			// Get all fields that can be filled in for coffee recipe
-			// Note: total of 19 fields but 3 of them are optional
-			let errorData = {};
+			// Get all fields that can be filled in for coffee recipe and error log
+			// Note: Total of 17 fields but 3 of them are optional
+			// Note: username and email are fixed and not editable
 			let {
 				imageUrl,
 				recipeName,
 				description,
-				username,
-				email,
 				totalBrewTime,
 				brewYield,
 				brewingMethod,
@@ -701,8 +711,9 @@ async function main() {
 				additionalIngredients,
 				brewer,
 				additionalEquipment,
-				steps
-			} = await validateFormatRecipeFields(req.body, errorData);
+				steps,
+				errorData
+			} = await validateFormatRecipeFields(req.body);
 
 			// Return error message if there is any error so far
 			if (Object.keys(errorData).length > 0) {
@@ -770,7 +781,8 @@ async function main() {
 		try {
 			// Get all fields required for recipe review and error log
 			// - Validate and format fields
-			let { title, content, rating, errorData } = validateFormatReviewFields(req.body);
+			let { title, content, rating, errorData } =
+				validateFormatReviewFields(req.body);
 
 			// Check that username and email are valid
 			// Note: username and email are used for identification purposes (cannot be changed)
@@ -807,7 +819,10 @@ async function main() {
 			};
 
 			// Get new average rating
-			let newAverageRating = await computeAverageRating(req.params.recipe_id, rating);
+			let newAverageRating = await computeAverageRating(
+				req.params.recipe_id,
+				rating
+			);
 
 			// Update recipe with new average rating and review element
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
@@ -841,7 +856,7 @@ async function main() {
 		// Validate if email is valid
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, { 'email': 'Invalid email address' });
+			sendInvalidError(res, { email: 'Invalid email address' });
 			return; // End function
 		}
 
@@ -912,57 +927,67 @@ async function main() {
 		// Validate email
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, { 'email': 'Invalid email address' });
+			sendInvalidError(res, { email: 'Invalid email address' });
 			return; // End function
 		}
 
 		try {
 			// Check if favorites collection exists for the user
-			let favoriteRecord = await db.collection(DB_COLLECTION.favorites).findOne({
-				user_email: email
-			});
+			let favoriteRecord = await db
+				.collection(DB_COLLECTION.favorites)
+				.findOne({
+					user_email: email
+				});
 
 			// If favorites collection exists, add coffee recipe ID to coffee_recipes array
 			if (favoriteRecord) {
 				// Check if recipe ID to be added already exists
-				let document = await db.collection(DB_COLLECTION.favorites).findOne({
-					'_id': favoriteRecord._id,
-					'coffee_recipes': {
-						'$in': [ObjectId(recipeId)]
-					}
-				});
+				let document = await db
+					.collection(DB_COLLECTION.favorites)
+					.findOne({
+						_id: favoriteRecord._id,
+						coffee_recipes: {
+							$in: [ObjectId(recipeId)]
+						}
+					});
 
 				if (document) {
-					sendInvalidError(res, { 'recipeId': 'Recipe ID is already in favorites collection' });
+					sendInvalidError(res, {
+						recipeId: 'Recipe ID is already in favorites collection'
+					});
 					return; // End function
 				}
 
-				let result = await db.collection(DB_COLLECTION.favorites).updateOne({
-					'_id': ObjectID(favoriteRecord._id)
-				}, {
-					'$push': {
-						'coffee_recipes': ObjectId(recipeId)
-					}
-				});
+				let result = await db
+					.collection(DB_COLLECTION.favorites)
+					.updateOne(
+						{
+							_id: ObjectID(favoriteRecord._id)
+						},
+						{
+							$push: {
+								coffee_recipes: ObjectId(recipeId)
+							}
+						}
+					);
 
 				sendSuccessResponse(res, 200, result);
-			}
-			else {
+			} else {
 				// If favorites collection does not exist, create a new favorites collection
 				let newFavoriteRecord = {
 					user_email: email,
 					coffee_recipes: [ObjectId(recipeId)]
 				};
 
-				let result = await db.collection(DB_COLLECTION.favorites).insertOne(newFavoriteRecord);
+				let result = await db
+					.collection(DB_COLLECTION.favorites)
+					.insertOne(newFavoriteRecord);
 
 				sendSuccessResponse(res, 201, result);
 			}
-		}
-		catch (err) {
+		} catch (err) {
 			sendDatabaseError(res);
 		}
-
 	});
 
 	// DELETE Endpoint to remove recipe from favorites
@@ -973,42 +998,46 @@ async function main() {
 		// Validate email
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
-			sendInvalidError(res, { 'email': 'Invalid email address' });
+			sendInvalidError(res, { email: 'Invalid email address' });
 			return; // End function
 		}
 
 		try {
 			// Check if recipe ID to be deleted exists
-			let document = await db.collection(DB_COLLECTION.favorites).findOne({
-				'user_email': email,
-				'coffee_recipes': {
-					'$in': [ObjectId(recipeId)]
-				}
-			});
+			let document = await db
+				.collection(DB_COLLECTION.favorites)
+				.findOne({
+					user_email: email,
+					coffee_recipes: {
+						$in: [ObjectId(recipeId)]
+					}
+				});
 
 			if (!document) {
-				sendInvalidError(res, { 'recipeId': 'Recipe ID does not exist in favorites collection' });
+				sendInvalidError(res, {
+					recipeId: 'Recipe ID does not exist in favorites collection'
+				});
 				return; // End function
 			}
 
-			let result = await db.collection(DB_COLLECTION.favorites).updateOne({
-				'user_email': email,
-				'coffee_recipes': {
-					'$in': [ObjectId(recipeId)]
+			let result = await db.collection(DB_COLLECTION.favorites).updateOne(
+				{
+					user_email: email,
+					coffee_recipes: {
+						$in: [ObjectId(recipeId)]
+					}
+				},
+				{
+					$pull: {
+						coffee_recipes: ObjectId(recipeId)
+					}
 				}
-			}, {
-				'$pull': {
-					'coffee_recipes': ObjectId(recipeId)
-				}
-			});
+			);
 
 			sendSuccessResponse(res, 200, result);
-
-		}
-		catch (err) {
+		} catch (err) {
 			sendDatabaseError(res);
 		}
-
 	});
 
 	// --- Routes: Beans ---
