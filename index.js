@@ -922,6 +922,12 @@ async function main() {
 		// Get recipe ID to be added to favorites collection
 		let recipeId = req.body.recipeId;
 
+		// Check that recipe ID is valid
+		if (!recipeId || !ObjectId.isValid(recipeId)) {
+			sendInvalidError(res, {recipeId: 'Invalid recipe ID'});
+			return; // End function
+		}
+
 		// Validate email
 		let email = req.params.email;
 		if (!email || !validateEmail(email)) {
