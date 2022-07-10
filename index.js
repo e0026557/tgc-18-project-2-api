@@ -558,10 +558,7 @@ async function main() {
 			}
 
 			// Get coffee recipe record
-			const recipeRecord = await getRecordById(
-				'recipes',
-				recipeId
-			);
+			const recipeRecord = await getRecordById('recipes', recipeId);
 
 			if (recipeRecord) {
 				// Populate coffee recipe with fields from referenced documents
@@ -682,10 +679,7 @@ async function main() {
 			}
 
 			// Get hashed email of the recipe's owner
-			let recipeRecord = await getRecordById(
-				'recipes',
-				recipeId
-			);
+			let recipeRecord = await getRecordById('recipes', recipeId);
 			let hash = recipeRecord.user.email;
 
 			// Get user's email
@@ -742,7 +736,7 @@ async function main() {
 				errorData
 			} = await validateFormatRecipeFields(req.body);
 
-			console.log(errorData)
+			console.log(errorData);
 
 			// Return error message if there is any error so far
 			if (Object.keys(errorData).length > 0) {
@@ -862,10 +856,7 @@ async function main() {
 			};
 
 			// Get new average rating
-			let newAverageRating = await computeAverageRating(
-				recipeId,
-				rating
-			);
+			let newAverageRating = await computeAverageRating(recipeId, rating);
 
 			// Update recipe with new average rating and review element
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
@@ -1155,14 +1146,13 @@ async function main() {
 
 			// Check that grinder ID is valid
 			if (!grinderId || !ObjectId.isValid(grinderId)) {
-				sendInvalidError(res, { grinder_id: 'Invalid coffee grinder ID' });
+				sendInvalidError(res, {
+					grinder_id: 'Invalid coffee grinder ID'
+				});
 				return; // End function
 			}
 
-			const grinderRecord = await getRecordById(
-				'grinders',
-				grinderId
-			);
+			const grinderRecord = await getRecordById('grinders', grinderId);
 
 			if (grinderRecord) {
 				sendSuccessResponse(res, 200, { result: grinderRecord });
@@ -1196,14 +1186,13 @@ async function main() {
 
 			// Check that brewer ID is valid
 			if (!brewerId || !ObjectId.isValid(brewerId)) {
-				sendInvalidError(res, { brewer_id: 'Invalid coffee brewer ID' });
+				sendInvalidError(res, {
+					brewer_id: 'Invalid coffee brewer ID'
+				});
 				return; // End function
 			}
 
-			const brewerRecord = await getRecordById(
-				'brewers',
-				brewerId
-			);
+			const brewerRecord = await getRecordById('brewers', brewerId);
 
 			if (brewerRecord) {
 				sendSuccessResponse(res, 200, { result: brewerRecord });
@@ -1237,14 +1226,13 @@ async function main() {
 
 			// Check that method ID is valid
 			if (!methodId || !ObjectId.isValid(methodId)) {
-				sendInvalidError(res, { method_id: 'Invalid coffee method ID' });
+				sendInvalidError(res, {
+					method_id: 'Invalid coffee method ID'
+				});
 				return; // End function
 			}
 
-			const methodRecord = await getRecordById(
-				'methods',
-				methodId
-			);
+			const methodRecord = await getRecordById('methods', methodId);
 
 			if (methodRecord) {
 				sendSuccessResponse(res, 200, { result: methodRecord });
