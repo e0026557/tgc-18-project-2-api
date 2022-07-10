@@ -715,6 +715,8 @@ async function main() {
 				errorData
 			} = await validateFormatRecipeFields(req.body);
 
+			console.log(errorData)
+
 			// Return error message if there is any error so far
 			if (Object.keys(errorData).length > 0) {
 				sendInvalidError(res, errorData);
@@ -726,10 +728,6 @@ async function main() {
 				image_url: imageUrl,
 				recipe_name: recipeName,
 				description: description,
-				user: {
-					username: username,
-					email: email
-				},
 				date: new Date(), // Set new date time
 				total_brew_time: totalBrewTime,
 				brew_yield: brewYield,
