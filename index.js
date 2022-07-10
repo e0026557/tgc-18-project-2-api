@@ -548,10 +548,19 @@ async function main() {
 	// GET Endpoint to retrieve a single coffee recipe by id
 	app.get('/recipes/:recipe_id', async function (req, res) {
 		try {
+			// Extract recipe ID
+			let recipeId = req.params.recipe_id;
+
+			// Check that recipe ID is valid
+			if (!recipeId || !ObjectId.isValid(recipeId)) {
+				sendInvalidError(res, { recipe_id: 'Invalid recipe ID' });
+				return; // End function
+			}
+
 			// Get coffee recipe record
 			const recipeRecord = await getRecordById(
 				'recipes',
-				req.params.recipe_id
+				recipeId
 			);
 
 			if (recipeRecord) {
@@ -663,10 +672,19 @@ async function main() {
 	// POST Endpoint to verify if user has the credential to update/delete recipe
 	app.post('/recipes/:recipe_id/access', async function (req, res) {
 		try {
+			// Extract recipe ID
+			let recipeId = req.params.recipe_id;
+
+			// Check that recipe ID is valid
+			if (!recipeId || !ObjectId.isValid(recipeId)) {
+				sendInvalidError(res, { recipe_id: 'Invalid recipe ID' });
+				return; // End function
+			}
+
 			// Get hashed email of the recipe's owner
 			let recipeRecord = await getRecordById(
 				'recipes',
-				req.params.recipe_id
+				recipeId
 			);
 			let hash = recipeRecord.user.email;
 
@@ -691,6 +709,15 @@ async function main() {
 	// PUT Endpoint to update a coffee recipe
 	app.put('/recipes/:recipe_id', async function (req, res) {
 		try {
+			// Extract recipe ID
+			let recipeId = req.params.recipe_id;
+
+			// Check that recipe ID is valid
+			if (!recipeId || !ObjectId.isValid(recipeId)) {
+				sendInvalidError(res, { recipe_id: 'Invalid recipe ID' });
+				return; // End function
+			}
+
 			// Get all fields that can be filled in for coffee recipe and error log
 			// Note: Total of 17 fields but 3 of them are optional
 			// Note: username and email are fixed and not editable
@@ -747,7 +774,7 @@ async function main() {
 
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
 				{
-					_id: ObjectId(req.params.recipe_id)
+					_id: ObjectId(recipeId)
 				},
 				{
 					$set: updatedRecipe
@@ -763,8 +790,17 @@ async function main() {
 	// DELETE Endpoint to delete a coffee recipe
 	app.delete('/recipes/:recipe_id', async function (req, res) {
 		try {
+			// Extract recipe ID
+			let recipeId = req.params.recipe_id;
+
+			// Check that recipe ID is valid
+			if (!recipeId || !ObjectId.isValid(recipeId)) {
+				sendInvalidError(res, { recipe_id: 'Invalid recipe ID' });
+				return; // End function
+			}
+
 			let result = await db.collection(DB_COLLECTION.recipes).deleteOne({
-				_id: ObjectId(req.params.recipe_id)
+				_id: ObjectId(recipeId)
 			});
 
 			sendSuccessResponse(res, 200, result);
@@ -777,6 +813,15 @@ async function main() {
 	// POST Endpoint to create a new review for a recipe
 	app.post('/recipes/:recipe_id/reviews', async function (req, res) {
 		try {
+			// Extract recipe ID
+			let recipeId = req.params.recipe_id;
+
+			// Check that recipe ID is valid
+			if (!recipeId || !ObjectId.isValid(recipeId)) {
+				sendInvalidError(res, { recipe_id: 'Invalid recipe ID' });
+				return; // End function
+			}
+
 			// Get all fields required for recipe review and error log
 			// - Validate and format fields
 			let { title, content, rating, errorData } =
@@ -818,14 +863,14 @@ async function main() {
 
 			// Get new average rating
 			let newAverageRating = await computeAverageRating(
-				req.params.recipe_id,
+				recipeId,
 				rating
 			);
 
 			// Update recipe with new average rating and review element
 			let result = await db.collection(DB_COLLECTION.recipes).updateOne(
 				{
-					_id: ObjectId(req.params.recipe_id)
+					_id: ObjectId(recipeId)
 				},
 				{
 					$push: {
@@ -924,7 +969,7 @@ async function main() {
 
 		// Check that recipe ID is valid
 		if (!recipeId || !ObjectId.isValid(recipeId)) {
-			sendInvalidError(res, {recipeId: 'Invalid recipe ID'});
+			sendInvalidError(res, { recipeId: 'Invalid recipe ID' });
 			return; // End function
 		}
 
@@ -1001,7 +1046,7 @@ async function main() {
 
 		// Check that recipe ID is valid
 		if (!recipeId || !ObjectId.isValid(recipeId)) {
-			sendInvalidError(res, {recipeId: 'Invalid recipe ID'});
+			sendInvalidError(res, { recipeId: 'Invalid recipe ID' });
 			return; // End function
 		}
 
@@ -1067,7 +1112,16 @@ async function main() {
 	// GET Endpoint to retrive coffee bean record by id
 	app.get('/beans/:bean_id', async function (req, res) {
 		try {
-			const beanRecord = await getRecordById('beans', req.params.bean_id);
+			// Extract bean ID
+			let beanId = req.params.bean_id;
+
+			// Check that bean ID is valid
+			if (!beanId || !ObjectId.isValid(beanId)) {
+				sendInvalidError(res, { bean_id: 'Invalid coffee bean ID' });
+				return; // End function
+			}
+
+			const beanRecord = await getRecordById('beans', beanId);
 
 			if (beanRecord) {
 				sendSuccessResponse(res, 200, { result: beanRecord });
@@ -1096,9 +1150,18 @@ async function main() {
 	// GET Endpoint to retrive coffee grinder record by id
 	app.get('/grinders/:grinder_id', async function (req, res) {
 		try {
+			// Extract grinder ID
+			let grinderId = req.params.grinder_id;
+
+			// Check that grinder ID is valid
+			if (!grinderId || !ObjectId.isValid(grinderId)) {
+				sendInvalidError(res, { grinder_id: 'Invalid coffee grinder ID' });
+				return; // End function
+			}
+
 			const grinderRecord = await getRecordById(
 				'grinders',
-				req.params.grinder_id
+				grinderId
 			);
 
 			if (grinderRecord) {
@@ -1128,9 +1191,18 @@ async function main() {
 	// GET Endpoint to retrive coffee brewer record by id
 	app.get('/brewers/:brewer_id', async function (req, res) {
 		try {
+			// Extract brewer ID
+			let brewerId = req.params.brewer_id;
+
+			// Check that brewer ID is valid
+			if (!brewerId || !ObjectId.isValid(brewerId)) {
+				sendInvalidError(res, { brewer_id: 'Invalid coffee brewer ID' });
+				return; // End function
+			}
+
 			const brewerRecord = await getRecordById(
 				'brewers',
-				req.params.brewer_id
+				brewerId
 			);
 
 			if (brewerRecord) {
@@ -1160,9 +1232,18 @@ async function main() {
 	// GET Endpoint to retrive brewing method by id
 	app.get('/methods/:method_id', async function (req, res) {
 		try {
+			// Extract method ID
+			let methodId = req.params.method_id;
+
+			// Check that method ID is valid
+			if (!methodId || !ObjectId.isValid(methodId)) {
+				sendInvalidError(res, { method_id: 'Invalid coffee method ID' });
+				return; // End function
+			}
+
 			const methodRecord = await getRecordById(
 				'methods',
-				req.params.method_id
+				methodId
 			);
 
 			if (methodRecord) {
