@@ -793,9 +793,20 @@ async function main() {
 				return; // End function
 			}
 
+			// Delete recipe from recipes collection
 			let result = await db.collection(DB_COLLECTION.recipes).deleteOne({
 				_id: ObjectId(recipeId)
 			});
+
+			// Delete recipe from all favorites collection
+			// TODO
+			// let affectedFavoriteRecords = await db.collection(DB_COLLECTION.favorites).find({
+			// 	'coffee_recipes' : {
+			// 		'$in': [ObjectId(recipeId)]
+			// 	}
+			// });
+
+			// console.log(affectedFavoriteRecords);
 
 			sendSuccessResponse(res, 200, result);
 		} catch (err) {
