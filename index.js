@@ -799,15 +799,18 @@ async function main() {
 			});
 
 			// Delete recipe from all favorites collection
-			await db.collection(DB_COLLECTION.favorites).updateMany({
-				'coffee_recipes' : {
-					'$in': [ObjectId(recipeId)]
+			await db.collection(DB_COLLECTION.favorites).updateMany(
+				{
+					coffee_recipes: {
+						$in: [ObjectId(recipeId)]
+					}
+				},
+				{
+					$pull: {
+						coffee_recipes: ObjectId(recipeId)
+					}
 				}
-			}, {
-				'$pull': {
-					'coffee_recipes': ObjectId(recipeId)
-				}
-			});
+			);
 
 			sendSuccessResponse(res, 200, result);
 		} catch (err) {
