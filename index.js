@@ -996,8 +996,15 @@ async function main() {
 
 			// If favorites collection exists, add coffee recipe ID to coffee_recipes array
 			if (favoriteRecord) {
-				// Check if recipe ID to be added already exists
-				let document = await db
+				// Check if recipe exists in the recipes collection
+				let recipeRecord = await getRecordById('recipes', recipeId);
+				if (!recipeRecord) {
+					sendInvalidError(res, {recipeId: 'Recipe does not exist'});
+					return; // End function
+				}
+
+				// Check if recipe ID to be added already exists in user's favorites collection
+				let favoritedRecipeRecord = await db
 					.collection(DB_COLLECTION.favorites)
 					.findOne({
 						_id: favoriteRecord._id,
@@ -1006,7 +1013,7 @@ async function main() {
 						}
 					});
 
-				if (document) {
+				if (favoritedRecipeRecord) {
 					sendInvalidError(res, {
 						recipeId: 'Recipe ID is already in favorites collection'
 					});
