@@ -641,7 +641,7 @@ async function main() {
 				date: new Date(),
 				total_brew_time: totalBrewTime,
 				brew_yield: brewYield,
-				brewingMethod: ObjectId(brewingMethod),
+				brewing_method: ObjectId(brewingMethod),
 				coffee_beans: coffeeBeans,
 				coffee_rest_period: coffeeRestPeriod,
 				amount_of_coffee: Number(coffeeAmount),
@@ -752,7 +752,7 @@ async function main() {
 				date: new Date(), // Set new date time
 				total_brew_time: totalBrewTime,
 				brew_yield: brewYield,
-				brewingMethod: ObjectId(brewingMethod),
+				brewing_method: ObjectId(brewingMethod),
 				coffee_beans: coffeeBeans,
 				coffee_rest_period: coffeeRestPeriod,
 				amount_of_coffee: Number(coffeeAmount),
