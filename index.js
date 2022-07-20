@@ -5,7 +5,6 @@ require('dotenv').config();
 const MongoUtil = require('./utilities/MongoUtil');
 const ObjectId = require('mongodb').ObjectId;
 const BcryptUtil = require('./utilities/BcryptUtil');
-const { ObjectID } = require('bson');
 
 // --- Setup Express App ---
 const app = express();
@@ -1025,7 +1024,7 @@ async function main() {
 					.collection(DB_COLLECTION.favorites)
 					.updateOne(
 						{
-							_id: ObjectID(favoriteRecord._id)
+							_id: ObjectId(favoriteRecord._id)
 						},
 						{
 							$push: {
