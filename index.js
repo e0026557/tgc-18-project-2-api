@@ -862,6 +862,7 @@ async function main() {
 
 			// Create a new review object
 			let newReview = {
+				_id: new ObjectId(),
 				date: new Date(),
 				title: title,
 				content: content,
