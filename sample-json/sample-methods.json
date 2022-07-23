@@ -1,0 +1,22 @@
+[
+  {
+    "_id": "1",
+    "name": "Immersion"
+  },
+  {
+    "_id": "2",
+    "name": "Espresso"
+  },
+  {
+    "_id": "3",
+    "name": "Drip"
+  },
+  {
+    "_id": "4",
+    "name": "Siphon"
+  },
+  {
+    "_id": "5",
+    "name": "Stovetop"
+  }
+]

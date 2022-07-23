@@ -1,16 +1,16 @@
 [
 	{
-		"_id": "FCR1",
+		"_id": "1",
 		"user_email": "john_smith@gmail.com",
-		"coffee_recipes": ["C1", "C2"]
+		"coffee_recipes": ["1", "2"]
 	},
 	{
-		"_id": "FCR2",
+		"_id": "2",
 		"user_email": "jane_austin@gmail.com",
-		"coffee_recipes": ["C3"]
+		"coffee_recipes": ["3"]
 	},
 	{
-		"_id": "FCR3",
+		"_id": "3",
 		"user_email": "sally_doe@gmail.com",
 		"coffee_recipes": []
 	}

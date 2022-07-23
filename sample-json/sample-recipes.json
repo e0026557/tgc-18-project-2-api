@@ -1,0 +1,128 @@
+[
+  {
+    "_id": "1",
+    "image_url": "https://images.unsplash.com/photo-1648142119324-fbab91e76c66?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1174&q=80",
+    "recipe_name": "Recipe 001",
+    "description": "Simple latte recipe",
+    "average_rating": 5,
+    "user": {
+      "username": "john_smith",
+      "email": "john_smith@gmail.com"
+    },
+    "date": "2010-01-01",
+    "total_brew_time": "10 min",
+    "brew_yield": "100 ml",
+    "brewing_method": "1",
+    "coffee_beans": ["1", "2"],
+    "coffee_rest_period": "1 to 3 days",
+    "amount_of_coffee": 36,
+    "grinder": "1",
+    "grind_setting": "9 Clicks",
+    "amount_of_water": "200 ml",
+    "water_temperature": 96,
+    "additional_ingredients": ["milk"],
+    "additional_equipment": ["stirrer"],
+    "brewer": "1",
+    "steps": [
+      "Preheat brewer with hot water",
+      "Ground coffee and pour into brewer",
+      "Add hot water and wait for 5 minutes",
+      "Extract coffee and serve with milk"
+    ],
+    "reviews": [
+      {
+        "_id": "1",
+        "date": "2010-01-01",
+        "title": "Great recipe",
+        "content": "Love this recipe so much",
+        "rating": 5,
+        "username": "jane_austin",
+        "email": "jane_austin@gmail.com"
+      }
+    ]
+  },
+  {
+    "_id": "2",
+    "image_url": "https://images.unsplash.com/photo-1648142119324-fbab91e76c66?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1174&q=80",
+    "recipe_name": "Recipe 002",
+    "description": "Simple mocha recipe",
+    "average_rating": 5,
+    "user": {
+      "username": "john_smith",
+      "email": "john_smith@gmail.com"
+    },
+    "date": "2010-02-02",
+    "total_brew_time": "10 min",
+    "brew_yield": "100 ml",
+    "brewing_method": "1",
+    "coffee_beans": ["1", "2"],
+    "coffee_rest_period": "1 to 3 days",
+    "amount_of_coffee": 36,
+    "grinder": "1",
+    "grind_setting": "9 Clicks",
+    "amount_of_water": "200 ml",
+    "water_temperature": 96,
+    "additional_ingredients": ["milk"],
+    "additional_equipment": ["stirrer"],
+    "brewer": "1",
+    "steps": [
+      "Preheat brewer with hot water",
+      "Ground coffee and pour into brewer",
+      "Add hot water and wait for 5 minutes",
+      "Extract coffee and serve with milk"
+    ],
+    "reviews": [
+      {
+        "_id": "2",
+        "date": "2010-02-02",
+        "title": "Great recipe",
+        "content": "Love this recipe so much",
+        "rating": 5,
+        "username": "jane_austin",
+        "email": "jane_austin@gmail.com"
+      }
+    ]
+  },
+  {
+    "_id": "3",
+    "image_url": "https://images.unsplash.com/photo-1648142119324-fbab91e76c66?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1174&q=80",
+    "recipe_name": "Recipe 003",
+    "description": "Simple americano recipe",
+    "average_rating": 5,
+    "user": {
+      "username": "john_smith",
+      "email": "john_smith@gmail.com"
+    },
+    "date": "2010-03-03",
+    "total_brew_time": "10 min",
+    "brew_yield": "100 ml",
+    "brewing_method": "1",
+    "coffee_beans": ["1", "2"],
+    "coffee_rest_period": "1 to 3 days",
+    "amount_of_coffee": 36,
+    "grinder": "1",
+    "grind_setting": "9 Clicks",
+    "amount_of_water": "200 ml",
+    "water_temperature": 96,
+    "additional_ingredients": ["milk"],
+    "additional_equipment": ["stirrer"],
+    "brewer": "1",
+    "steps": [
+      "Preheat brewer with hot water",
+      "Ground coffee and pour into brewer",
+      "Add hot water and wait for 5 minutes",
+      "Extract coffee and serve with milk"
+    ],
+    "reviews": [
+      {
+        "_id": "3",
+        "date": "2010-03-03",
+        "title": "Great recipe",
+        "content": "Love this recipe so much",
+        "rating": 5,
+        "username": "jane_austin",
+        "email": "jane_austin@gmail.com"
+      }
+    ]
+  }
+]

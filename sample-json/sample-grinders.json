@@ -1,20 +1,20 @@
 [
   {
-    "_id": "G1",
+    "_id": "1",
     "brand": "Commandante",
     "model": "MK 4",
-    "type": "manual"
+    "type": "Manual"
   },
   {
-    "_id": "G2",
+    "_id": "2",
     "brand": "Niche",
-    "model": "Mini",
-    "type": "electric"
+    "model": "Zero",
+    "type": "Electric"
   },
   {
-    "_id": "G3",
+    "_id": "3",
     "brand": "Hario",
     "model": "Mini Mill Slim",
-    "type": "manual"
+    "type": "Manual"
   }
 ]

@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "1",
+    "name": "Brazil",
+    "roast_level": "Medium",
+    "blend": false,
+    "variety": "Arabica",
+    "flavor_notes": ["Chestnut", "Chocolate", "Brown sugar", "Apricot"],
+    "roaster": "Jewel Coffee",
+    "origins": ["Brazil"]
+  },
+  {
+    "_id": "2",
+    "name": "Old Friends",
+    "roast_level": "Medium",
+    "blend": true,
+    "variety": "Arabica",
+    "flavor_notes": ["Floral", "Fruity", "Well-Bodied"],
+    "roaster": "Jewel Coffee",
+    "origins": ["Ethiopia", "Indonesia"]
+  },
+  {
+    "_id": "3",
+    "name": "Pearl Gem",
+    "roast_level": "Medium",
+    "blend": true,
+    "variety": "Arabica",
+    "flavor_notes": ["Vibrant", "Complex", "Silky smooth"],
+    "roaster": "Jewel Coffee",
+    "origins": ["Central America", "East Africa"]
+  },
+  {
+    "_id": "4",
+    "name": "Ethiopia",
+    "roast_level": "Medium",
+    "blend": false,
+    "variety": "Arabica",
+    "flavor_notes": ["Floral", "Tropical fruits", "Medium body"],
+    "roaster": "Jewel Coffee",
+    "origins": ["Ethiopia"]
+  }
+]

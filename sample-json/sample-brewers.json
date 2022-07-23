@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "1",
+    "rand": "Aeropress",
+    "model": "Go",
+    "type": "Manual"
+  },
+  {
+    "_id": "2",
+    "brand": "Breville",
+    "model": "Barista Express",
+    "type": "Electric"
+  },
+  {
+    "_id": "B3",
+    "brand": "Wacaco",
+    "model": "Picopresso",
+    "type": "Manual"
+  }
+]
